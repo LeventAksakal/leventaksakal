@@ -1,0 +1,13 @@
+{
+  "name": "leventaksakal",
+  "workspaces": [
+    "website"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=website",
+    "build": "npm run build --workspace=website"
+  },
+  "dependencies": {
+    "vue-i18n": "^11.1.11"
+  }
+}
