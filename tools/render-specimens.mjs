@@ -4,7 +4,7 @@ import { chromium } from 'playwright'
 import fs from 'node:fs'
 import path from 'node:path'
 const here = path.dirname(new URL(import.meta.url).pathname)
-const fonts = ['Sacramento', 'Yellowtail', 'Damion', 'MrDafoe', 'HomemadeApple']
+const fonts = (process.argv[4] ?? 'Sacramento,Yellowtail,Damion,MrDafoe,HomemadeApple').split(',')
 const text = process.argv[2] ?? 'Levent Aksakal'
 const size = Number(process.argv[3] ?? 360)
 const faces = fonts.map(f => `@font-face{font-family:${f};src:url(data:font/ttf;base64,${fs.readFileSync(`${here}/fonts/${f}-Regular.ttf`).toString('base64')})}`).join('\n')

@@ -1,0 +1,29 @@
+:root {
+  color-scheme: dark;
+  --charcoal: #0b0b0c;
+  --chalk: #e6e1d8;
+  --smudge: #9a978f;
+  --cadmium: #f2a900;
+  --panel: rgba(18, 18, 20, 0.82);
+  --sans: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --mono: ui-monospace, 'SFMono-Regular', Menlo, monospace;
+}
+html, body { margin: 0; height: 100%; background: var(--charcoal); color: var(--chalk); font: 14px/1.45 var(--sans); overflow: hidden; }
+#scene { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+.hud { position: fixed; top: calc(14px + env(safe-area-inset-top, 0px)); left: 16px; max-width: min(60ch, calc(100% - 32px)); pointer-events: none; }
+.hud h1 { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: 0.01em; }
+.hud p { margin: 4px 0 0; color: var(--smudge); font-size: 12px; white-space: pre-line; }
+.mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.transport {
+  position: fixed; left: 16px; right: 16px; bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+  display: flex; gap: 10px; align-items: center; max-width: 760px;
+  background: var(--panel); padding: 8px 10px; border-radius: 6px;
+}
+.transport button { font: 500 13px var(--sans); color: #111; background: var(--cadmium); border: 0; border-radius: 4px; padding: 6px 12px; cursor: pointer; }
+.transport button#restart { background: #3a3b40; color: var(--chalk); }
+.transport button:focus-visible, #scrub:focus-visible { outline: 2px solid #ffe08a; outline-offset: 2px; }
+#scrub { flex: 1; min-width: 0; accent-color: var(--cadmium); }
+#clock { min-width: 7ch; text-align: right; }
+#gui { position: fixed; top: calc(12px + env(safe-area-inset-top, 0px)); right: 12px; max-height: calc(100% - 90px); overflow: auto; }
+#gui .lil-gui.root { --background-color: rgba(20, 20, 23, 0.9); --widget-color: #2c2f34; --focus-color: #3a3d44; --hover-color: #34373d; --number-color: #ffe08a; --font-family: var(--sans); width: 300px; }
+@media (max-width: 700px) { #gui .lil-gui.root { width: min(300px, calc(100vw - 24px)); } }

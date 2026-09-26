@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Paste Physics Lab</title>
+    <link rel="stylesheet" href="/src/lab/paste.css" />
+  </head>
+  <body>
+    <canvas id="scene" aria-hidden="true"></canvas>
+    <header class="hud">
+      <h1>Paste physics lab</h1>
+      <p id="status" class="mono">Loading…</p>
+    </header>
+    <div class="transport">
+      <button id="play" type="button">Pause</button>
+      <button id="restart" type="button">Restart</button>
+      <input id="scrub" type="range" min="0" max="1000" value="0" aria-label="Jump to time (re-simulates)" />
+      <output id="clock" class="mono">0.00 s</output>
+    </div>
+    <aside id="gui" aria-label="Physical and look parameters"></aside>
+    <script type="module" src="/src/lab/paste.ts"></script>
+  </body>
+</html>

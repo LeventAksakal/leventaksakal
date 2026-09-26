@@ -31,7 +31,7 @@ from centerline import load_mask, resample, smooth  # noqa: E402
 NB8 = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)]
 
 
-def nearest_on(mask, x, y, r=40):
+def nearest_on(mask, x, y, r=60):
     y0, y1 = max(0, int(y) - r), min(mask.shape[0], int(y) + r + 1)
     x0, x1 = max(0, int(x) - r), min(mask.shape[1], int(x) + r + 1)
     ys, xs = np.nonzero(mask[y0:y1, x0:x1])

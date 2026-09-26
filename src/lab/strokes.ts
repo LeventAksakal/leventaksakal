@@ -5,6 +5,7 @@
  */
 import GUI from 'lil-gui'
 import damion from '../lettering/Damion.strokes.json'
+import nycd from '../lettering/NothingYouCouldDo.strokes.json'
 import type { StrokeSet } from '../lettering/types'
 import {
   defaultKinematics,
@@ -14,8 +15,8 @@ import {
   type WritingPlan,
 } from '../physics/kinematics'
 
-const strokes = damion as StrokeSet
-const PRESET_KEY = 'lab.strokes.preset.v1'
+const strokes = (new URLSearchParams(location.search).get('font') === 'damion' ? damion : nycd) as StrokeSet
+const PRESET_KEY = "lab.strokes.preset.v2"
 const LEAD_IN = 0.4 // s shown before first touchdown
 const LEAD_OUT = 0.8 // s held after final lift-off
 
@@ -395,10 +396,15 @@ if (window.innerWidth < 900) gui.close()
 // ---------------------------------------------------------------- font list
 const fonts = [
   {
+    family: 'Nothing You Could Do',
+    bead: 2.5,
+    traced: true,
+    note: 'Chosen. Monoline print handwriting with open letters, so the paste bead width is free. 17 strokes; e and a are drawn in one pass each.',
+  },
+  {
     family: 'Damion',
     bead: 5.7,
-    traced: true,
-    note: 'Letters join, so “Levent” is one stroke. Open counters survive a thick bead. Retraces on v, a and k, as in real cursive.',
+    note: 'Traced as the fallback (?font=damion). Letters join, so “Levent” is one stroke; retraces on v, a and k.',
   },
   {
     family: 'Yellowtail',

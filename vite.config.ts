@@ -10,6 +10,7 @@ export default defineConfig({
       input: {
         main: resolve(__dirname, 'index.html'),
         strokes: resolve(__dirname, 'lab/strokes/index.html'),
+        paste: resolve(__dirname, 'lab/paste/index.html'),
       },
     },
   },
