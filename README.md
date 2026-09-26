@@ -18,7 +18,9 @@ URL switches: `?quality=high|medium|low`, `?final` (skip straight to the settled
    never touches WebGL: a CSS overlay (`#dim`, opacity only) recedes the paper under the content.
    Hovering or focusing the name slides the reflected studio lights, so a highlight glides along the letters.
 
-Page text is taken verbatim from the v1 site (`content/v1-content.json`).
+The hero is four short lines; the rest of the page text is taken verbatim from the v1 site
+(`content/v1-content.json`). University marks in the hero are links; drop the official SVGs in
+`public/logos/` (`ozu.svg`, `boun.svg`) and swap the `.org-mark` text for `<img>` (styled by `.org img`).
 
 **Skip intro** is focusable from the first frame; any key, click, scroll or touch also skips. Skipping,
 repeat visits (`localStorage`) and `prefers-reduced-motion` all jump to the settled state by loading
@@ -87,6 +89,30 @@ render call. What keeps it there:
 - **Post**: one quarter-resolution blur feeds both the tilt-shift and the highlight glow (2 small passes,
   instead of a 12-pass bloom plus a separate blur). Detail noise for the paste normals is baked once.
 - **Final state**: static; zero WebGL work while scrolling (`node tools/check-idle.mjs <url>` asserts 0 renders).
+
+### Startup (cold load)
+
+- **Paper**: baked from a 256² tileable noise texture generated on the CPU (`src/scene/noise.ts`, the
+  MaterialX Perlin gradient set and hash) instead of ~34 inlined `mx_noise_float` calls per texel. The
+  old bake was one huge GPU job (a GPU watchdog can reset the device on it: black screen) with a slow
+  cold shader compile. It renders in 4 strips, one submission each. Same look: channel mean/std match
+  within 0.01 (`node tools/paper-stats.mjs <url> <out.png>` prints them and writes crops).
+- **Shaders**: lit materials compile in parallel off the main thread against the post pass's target
+  (`PassNode.compileAsync`), then one black warm-up frame builds the rest.
+- **Never black**: if 3D isn't ready after 6 s the static page shows (name image + content), and the
+  rendered name replaces it without the intro (`?slowboot=<ms>`, `0` disables). A lost GPU device
+  (`renderer.onDeviceLost`, WebGL context loss) also falls back to the static page.
+- **Chrome compatibility**: three r186 sets `swizzle: 'rgba'` on every texture view, which Chrome
+  builds with the older form of that field reject (WebGPU rendering then fails); `stage.ts` drops it
+  (identity, so a no-op).
+- **Fast-forward**: the worker steps toward a target in ≈8 ms slices and replies after each, so a
+  machine that can't sustain ×5 gets a slower fast-forward, not 200 ms jumps.
+
+Diagnosis tools: `?profile` marks each boot stage (`boot:*`, GPU-synced) in the Performance panel;
+`node tools/record.mjs <url> <dir> [--ff=3] [--webgpu]` records video + Chrome trace + timeline;
+`python3 tools/trace-summary.py <dir>/trace.json` lists per-thread busy time and the longest tasks;
+`node tools/cpu-profile.mjs <url>` prints the hottest JS during boot; `node tools/cold-load.mjs <url> <prefix>`
+screenshots a cold first visit every 2 s.
 
 Benchmarks (headless Chromium, SwiftShader: CPU numbers are meaningful, GPU numbers are not):
 `npx tsx tools/sim/bench.ts` (simulation time + field checksum), `node tools/bench-main.mjs <url>`

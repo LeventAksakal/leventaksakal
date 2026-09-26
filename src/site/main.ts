@@ -35,7 +35,7 @@ const hint = document.querySelector<HTMLParagraphElement>('#hint')!
 const skipLink = document.querySelector<HTMLAnchorElement>('#skip-link')!
 const main = document.querySelector<HTMLElement>('#main')!
 const dimLayer = document.querySelector<HTMLElement>('#dim')!
-const lines = [...document.querySelectorAll<HTMLElement>('.desk .lead')]
+const lines = [...document.querySelectorAll<HTMLElement>('.desk .hero .line')]
 const deskExtras = [...document.querySelectorAll<HTMLElement>('.desk .cue')]
 
 const store = {
@@ -60,9 +60,16 @@ let phase: Phase = 'intro'
 let world: World
 
 // ---------------------------------------------------------------- boot
+performance.mark('boot:script')
+// Never a long black screen: if 3D takes more than a few seconds to boot (slow machine), show the
+// static page meanwhile; once 3D is ready the rendered name replaces the image, without the intro.
+let slowBoot = false
+const slowBootMs = Number(params.get('slowboot') ?? 6000) // ?slowboot=0 disables (testing)
+const slowTimer = params.has('capture') || !slowBootMs ? 0 : window.setTimeout(() => ((slowBoot = true), staticFallback()), slowBootMs)
 try {
   world = await createWorld({ canvas, forceWebGL: params.has('webgl'), worker: !params.has('capture') && !params.has('noworker') })
 } catch (err) {
+  clearTimeout(slowTimer)
   console.warn('3D unavailable, showing the static page', err)
   staticFallback()
   throw err
@@ -70,6 +77,22 @@ try {
 world.load(set, siteKinematics, sitePhysics)
 // Build every shader now (screen still black), not in the middle of the intro.
 await world.warmUp()
+clearTimeout(slowTimer)
+// A lost GPU device (driver reset, watchdog) would leave the canvas black: show the static page.
+let gpuLost = false
+world.renderer.onDeviceLost = (info: unknown) => {
+  if (gpuLost) return
+  gpuLost = true
+  console.warn('GPU device lost, showing the static page', info)
+  removeIntroListeners()
+  world.halt()
+  gsap.killTweensOf([look, main, ...lines, ...deskExtras])
+  phase = 'final'
+  setHint('')
+  staticFallback()
+  gsap.set(main, { autoAlpha: 1 })
+  gsap.set([...lines, ...deskExtras], { autoAlpha: 1, y: 0 })
+}
 const bakeBytes: Promise<Uint8Array | null> = fetch(bakeUrl)
   .then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(String(r.status)))))
   .then((b) => new Uint8Array(b))
@@ -142,10 +165,14 @@ const requestRender = () => {
 }
 
 function frame(now: number) {
+  if (gpuLost) {
+    looping = false
+    return
+  }
   const dt = Math.min(0.1, (now - last) / 1000)
   last = now
   if (phase === 'intro') {
-    world.advance(dt * rate, 48 * rate)
+    world.advance(dt * rate, 0.15 * rate)
     world.sync(dt * rate)
     if (world.sim.t >= world.sim.endTime) beginTransition()
     needsRender = true
@@ -318,7 +345,7 @@ function removeIntroListeners() {
 home.addEventListener('click', (e) => {
   // This is the only page for now: at home the name replays the intro.
   e.preventDefault()
-  if (phase !== 'final') return
+  if (phase !== 'final' || gpuLost) return
   gsap.to(main, {
     autoAlpha: 0,
     duration: 0.3,
@@ -406,7 +433,12 @@ if (params.has('capture')) {
   })
 } else {
   const seen = store.get(SEEN_KEY) === '1'
-  if (reduceMotion || seen || params.has('final')) void goFinal(!reduceMotion)
+  if (slowBoot) {
+    // The static page is already up: swap the image for the rendered name, no intro.
+    canvas.hidden = false
+    document.querySelector<HTMLImageElement>('#fallback-name')!.hidden = true
+    void goFinal(false)
+  } else if (reduceMotion || seen || params.has('final')) void goFinal(!reduceMotion)
   else startIntro()
   kick()
 }

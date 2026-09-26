@@ -10,6 +10,7 @@
  */
 import * as THREE from 'three/webgpu'
 import { color, float, mix, normalWorld, smoothstep, vec3 } from 'three/tsl'
+import { bootMark } from './profile'
 
 export type Quality = 'high' | 'medium' | 'low'
 
@@ -81,9 +82,31 @@ function studioEnvironment(kind: 'fill' | 'gloss'): THREE.Scene {
   return env
 }
 
+/**
+ * three r186 puts `swizzle: 'rgba'` on every texture view. Chrome builds that implement the
+ * older form of GPUTextureViewDescriptor.swizzle reject that value and throw, which breaks
+ * WebGPU rendering. 'rgba' is the identity (the default), so dropping it is always a no-op.
+ */
+function patchTextureViewSwizzle() {
+  const T = (globalThis as { GPUTexture?: { prototype: GPUTexture & { __swizzleSafe?: boolean } } }).GPUTexture
+  if (!T || T.prototype.__swizzleSafe) return
+  const createView = T.prototype.createView
+  T.prototype.createView = function (this: GPUTexture, d?: GPUTextureViewDescriptor & { swizzle?: unknown }) {
+    if (d && d.swizzle === 'rgba') {
+      const rest: GPUTextureViewDescriptor & { swizzle?: unknown } = { ...d }
+      delete rest.swizzle
+      return createView.call(this, rest)
+    }
+    return createView.call(this, d)
+  }
+  T.prototype.__swizzleSafe = true
+}
+
 export async function createStage(o: StageOptions) {
+  patchTextureViewSwizzle()
   const renderer = new THREE.WebGPURenderer({ canvas: o.canvas, antialias: o.quality !== 'low', forceWebGL: o.forceWebGL ?? false })
   await renderer.init()
+  await bootMark('renderer-init', renderer)
   // Neutral keeps the cadmium saturated where AgX drifts bright yellows toward beige.
   renderer.toneMapping = THREE.NeutralToneMapping
   renderer.toneMappingExposure = 1.0
@@ -99,6 +122,7 @@ export async function createStage(o: StageOptions) {
   scene.environment = pmrem.fromScene(studioEnvironment('fill'), 0.0).texture
   scene.environmentIntensity = 0.45
   const glossEnv = pmrem.fromScene(studioEnvironment('gloss'), 0.0).texture
+  await bootMark('environment', renderer)
 
   const key = new THREE.DirectionalLight('#fff3e6', 2.6)
   key.position.copy(KEY_DIR).multiplyScalar(0.6)

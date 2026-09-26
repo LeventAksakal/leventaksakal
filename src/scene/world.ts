@@ -17,6 +17,7 @@ import { bakePaper, createPaper } from './paper'
 import { bakeDetail, PasteSurface } from './paste'
 import { createPost } from './post'
 import { createStage, type Quality } from './stage'
+import { bootMark } from './profile'
 import { ThreadMesh } from './threadMesh'
 
 export interface WorldOptions {
@@ -45,8 +46,10 @@ export async function createWorld(o: WorldOptions) {
   const quality = o.quality ?? pickQuality()
   const stage = await createStage({ canvas: o.canvas, forceWebGL: o.forceWebGL, quality })
   const { renderer, scene, camera } = stage
-  const paperBake = bakePaper(renderer, quality === 'high' ? 4096 : quality === 'medium' ? 3072 : 2048)
+  const paperBake = await bakePaper(renderer, quality === 'high' ? 4096 : quality === 'medium' ? 3072 : 2048)
+  await bootMark('paper-bake', renderer)
   const detail = bakeDetail(renderer)
+  await bootMark('detail-bake', renderer)
   const post = createPost(renderer, scene, camera, quality)
 
   const maxDpr = Math.min(o.maxDpr ?? 2, window.devicePixelRatio || 1)
@@ -65,42 +68,35 @@ export async function createWorld(o: WorldOptions) {
   // Simulation driver: stepped here, or in a worker whose replies update the local mirror.
   const worker = o.worker && typeof Worker !== 'undefined' ? new Worker(new URL('../physics/sim.worker.ts', import.meta.url), { type: 'module' }) : null
   let gen = 0
-  let inFlight = false
   let target = 0
   let acc = 0
   if (worker) {
-    worker.onmessage = (e: MessageEvent<{ gen: number; snap: SimSnapshot; capped: boolean }>) => {
-      if (e.data.gen !== gen) return
-      inFlight = false
-      sim.applySnapshot(e.data.snap)
-      if (e.data.capped) target = sim.t // too far behind: drop the backlog, like the local cap
+    worker.onmessage = (e: MessageEvent<{ gen: number; snap: SimSnapshot }>) => {
+      if (e.data.gen === gen) sim.applySnapshot(e.data.snap)
     }
   }
 
-  /** Advance simulated time by dt (s), at most maxSteps steps at once (excess time is dropped). */
-  function advance(dt: number, maxSteps: number) {
+  /**
+   * Advance simulated time by dt (s). If the simulation falls more than `maxLag` seconds behind
+   * (a slow CPU, or fast-forward beyond what it can do), the excess is dropped: the writing then
+   * runs slower than asked, but smoothly.
+   */
+  function advance(dt: number, maxLag: number) {
     if (!worker) {
-      acc += dt
-      let n = 0
-      while (acc >= sim.dt && n < maxSteps) {
+      acc = Math.min(acc + dt, maxLag)
+      while (acc >= sim.dt) {
         sim.step()
         acc -= sim.dt
-        n++
       }
-      if (n >= maxSteps) acc = 0
       return
     }
-    target += dt
-    if (!inFlight) {
-      inFlight = true
-      worker.postMessage({ type: 'advance', gen, target, maxSteps })
-    }
+    target = Math.min(target + dt, sim.t + maxLag)
+    worker.postMessage({ type: 'target', gen, t: target })
   }
 
   /** Stop the running simulation (before jumping to a bake); late worker replies are ignored. */
   function halt() {
     gen++
-    inFlight = false
     worker?.postMessage({ type: 'stop' })
   }
 
@@ -111,7 +107,6 @@ export async function createWorld(o: WorldOptions) {
     }
     sim = new PasteSimulation(set, kin, phys, -INTRO_LEAD)
     gen++
-    inFlight = false
     acc = 0
     target = sim.t
     if (worker && !local) worker.postMessage({ type: 'init', gen, set, kin, phys, startTime: -INTRO_LEAD })
@@ -199,23 +194,33 @@ export async function createWorld(o: WorldOptions) {
   /**
    * Compile every pipeline before anything is shown: all paste chunks, the thread, the tube,
    * shadows and post, so no shader is built mid-intro (each build stalls a frame). Renders one
-   * frame with the post fade at black.
+   * frame, through the real pipeline, with the post fade at black.
    */
   async function warmUp() {
     const fade = post.uniforms.fade.value
     const threadOn = thread.mesh.visible
     const tubeOn = tube.group.visible
-    paste.showAll(true)
-    thread.mesh.visible = true
-    tube.group.visible = true
-    try {
-      await renderer.compileAsync(scene, camera)
-    } catch {
-      /* compileAsync is an optimisation; the render below compiles anyway */
-    }
     post.uniforms.fade.value = 0
+    // 1) Post chain alone (meshes hidden): builds the small post shaders and sets up the scene
+    //    pass's target (format, MSAA), which the lit materials must be compiled against.
+    const meshes = [paper.mesh, paste.group, thread.mesh, tube.group]
+    for (const m of meshes) m.visible = false
+    post.pipeline.render()
+    // 2) The big lit materials, compiled for that target in parallel off the main thread
+    //    (createRenderPipelineAsync / KHR_parallel_shader_compile) instead of one long freeze.
+    //    Not renderer.compileAsync(scene): that targets the canvas, which nothing renders to.
+    for (const m of meshes) m.visible = true
+    paste.showAll(true)
+    try {
+      await post.scenePass.compileAsync(renderer)
+    } catch {
+      /* an optimisation only: the render below compiles whatever is missing */
+    }
+    await bootMark('compile', renderer)
+    // 3) One real frame (shadow depth variants), still black.
     stage.key.shadow.needsUpdate = true
     post.pipeline.render()
+    await bootMark('first-render', renderer)
     post.uniforms.fade.value = fade
     paste.showAll(false)
     thread.mesh.visible = threadOn
@@ -235,6 +240,7 @@ export async function createWorld(o: WorldOptions) {
     stage,
     renderer,
     scene,
+    paperBake,
     camera,
     quality,
     post,

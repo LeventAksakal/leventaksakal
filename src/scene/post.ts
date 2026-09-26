@@ -50,5 +50,5 @@ export function createPost(renderer: THREE.WebGPURenderer, scene: THREE.Scene, c
 
   const pipeline = new THREE.RenderPipeline(renderer)
   pipeline.outputNode = vec4(out, 1)
-  return { pipeline, uniforms: u }
+  return { pipeline, uniforms: u, scenePass }
 }
