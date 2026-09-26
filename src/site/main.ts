@@ -75,7 +75,7 @@ function navPose(): CameraPose {
   const navW = Math.min(380, Math.max(200, W * 0.3))
   const pitch = 16
   const nameH = navW * (48 / 400) * Math.cos(THREE.MathUtils.degToRad(pitch))
-  const top = 16
+  const top = 24
   return {
     pitch,
     yaw: 0,
