@@ -79,6 +79,11 @@ export class HeightField {
     this.markDirty(0, this.nx, 0, this.nz)
   }
 
+  /** Mark the whole field changed (after loading a bake). */
+  touchAll() {
+    this.markDirty(0, this.nx, 0, this.nz)
+  }
+
   /** Bilinear height (m) at world x, z. */
   sample(x: number, z: number): number {
     const fx = (x - this.x0) / this.dx - 0.5

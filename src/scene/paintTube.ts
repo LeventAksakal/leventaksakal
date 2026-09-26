@@ -82,7 +82,7 @@ export class PaintTube {
   /** current body axis (world), smoothed */
   private readonly axis = new THREE.Vector3(0.3, 1, -0.2).normalize()
 
-  constructor() {
+  constructor(envMap: THREE.Texture | null = null) {
     const geo = new THREE.LatheGeometry(profile(), 48)
     // UV v along the axis in proportion to length (Lathe's v follows point index).
     const pos = geo.attributes.position as THREE.BufferAttribute
@@ -102,6 +102,8 @@ export class PaintTube {
       clearcoat: 0.35,
       clearcoatRoughness: 0.25,
       side: THREE.DoubleSide,
+      envMap,
+      envMapIntensity: 0.35,
     })
     this.mesh = new THREE.Mesh(geo, mat)
     this.mesh.castShadow = true

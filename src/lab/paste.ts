@@ -1,41 +1,26 @@
 /**
- * Milestone 2 lab: the full Tier-1 paste simulation in the lit 3D desk scene, with every
+ * Paste lab: the full Tier-1 paste simulation in the lit 3D desk scene, with every
  * physical and look parameter exposed. Physics edits restart the (deterministic) run.
  */
 import GUI from 'lil-gui'
-import * as THREE from 'three/webgpu'
 import damion from '../lettering/Damion.strokes.json'
 import nycd from '../lettering/NothingYouCouldDo.strokes.json'
 import type { StrokeSet } from '../lettering/types'
-import { defaultKinematics, type KinematicsParams } from '../physics/kinematics'
-import { defaultPhysics, type PhysicsParams } from '../physics/params'
+import type { KinematicsParams } from '../physics/kinematics'
+import type { PhysicsParams } from '../physics/params'
+import { siteKinematics, sitePhysics } from '../physics/preset'
 import { derive } from '../physics/rheology'
-import { PasteSimulation } from '../physics/simulation'
-import { PaintTube } from '../scene/paintTube'
-import { createPaper, bakePaperDetail } from '../scene/paper'
-import { PasteSurface } from '../scene/paste'
-import { createStage } from '../scene/stage'
-import { ThreadMesh } from '../scene/threadMesh'
+import { createWorld, INTRO_LEAD } from '../scene/world'
 
 const query = new URLSearchParams(location.search)
 const fonts: Record<string, StrokeSet> = { nycd: nycd as StrokeSet, damion: damion as StrokeSet }
 const view = { font: query.get('font') === 'damion' ? 'damion' : 'nycd', rate: 1, playing: !matchMedia('(prefers-reduced-motion: reduce)').matches }
-const PRESET_KEY = 'lab.paste.preset.v1'
+const PRESET_KEY = 'lab.paste.preset.v2'
 
-const kin: KinematicsParams = {
-  ...defaultKinematics,
-  nozzleHeight: 4,
-  drawDuration: 12.5,
-  liftMin: 0.22,
-  liftMax: 0.45,
-  liftHeight: 22,
-  beadWidth: 4.4,
-  areaRatioMax: 1.5,
-}
-const phys: PhysicsParams = { ...defaultPhysics }
+const kin: KinematicsParams = { ...siteKinematics }
+const phys: PhysicsParams = { ...sitePhysics }
 loadPreset()
 
-const INTRO = -0.9 // s: tube enters before first touch
 const OUTRO = 1.4 // s after settling: tube gone, hold
 
 const statusEl = document.querySelector<HTMLParagraphElement>('#status')!
@@ -44,44 +29,14 @@ const scrub = document.querySelector<HTMLInputElement>('#scrub')!
 const playBtn = document.querySelector<HTMLButtonElement>('#play')!
 const canvas = document.querySelector<HTMLCanvasElement>('#scene')!
 
-const stage = await createStage({ canvas, forceWebGL: query.has('webgl'), maxDpr: Number(query.get('dpr') ?? 2) })
-const { renderer, scene, camera } = stage
-stage.resize()
-window.addEventListener('resize', () => stage.resize())
+const world = await createWorld({ canvas, forceWebGL: query.has('webgl'), maxDpr: Number(query.get('dpr') ?? 2) })
+window.addEventListener('resize', () => world.resize())
+world.post.uniforms.fade.value = 1
 
-const paperDetail = bakePaperDetail(renderer, query.has('lowres') ? 1024 : 2048)
-
-let sim!: PasteSimulation
-let paste!: PasteSurface
-let threadMesh!: ThreadMesh
-let paper!: ReturnType<typeof createPaper>
-const tube = new PaintTube()
-scene.add(tube.group)
-
-function build() {
-  if (paste) scene.remove(paste.group)
-  if (threadMesh) scene.remove(threadMesh.mesh)
-  if (paper) scene.remove(paper.mesh)
-  sim = new PasteSimulation(fonts[view.font], kin, phys, INTRO)
-  paste = new PasteSurface(sim.field)
-  scene.add(paste.group)
-  const f = sim.field
-  paper = createPaper({
-    detail: paperDetail.texture,
-    occlusion: paste.occlusion,
-    fieldRect: { x0: f.x0, z0: f.z0, w: f.nx * f.dx, d: f.nz * f.dx },
-  })
-  scene.add(paper.mesh)
-  // Thread shares the paste look but has no height field.
-  const tm = new THREE.MeshPhysicalNodeMaterial({ color: paste.uniforms.base.value, roughness: 0.3, clearcoat: 0.9, clearcoatRoughness: 0.07 })
-  threadMesh = new ThreadMesh(sim.thread.n, tm)
-  scene.add(threadMesh.mesh)
+const restart = (at = -INTRO_LEAD) => {
+  world.load(fonts[view.font], kin, phys)
   applyLook()
-}
-
-function restart(at = INTRO) {
-  build()
-  if (at > INTRO) sim.advanceTo(at)
+  if (at > -INTRO_LEAD) world.sim.advanceTo(at)
   acc = 0
 }
 
@@ -91,26 +46,13 @@ let last = performance.now()
 let fpsAvg = 60
 let simMs = 0
 let lastStatus = 0
-const tip = new THREE.Vector3()
-const travel = new THREE.Vector2(1, 0)
-
-function end() {
-  return sim.endTime + OUTRO
-}
-
-function tubeTip(t: number): THREE.Vector3 {
-  tip.set(sim.tip.x, sim.tip.y, sim.tip.z)
-  const away = new THREE.Vector3(0.16, 0.11, -0.12)
-  if (t < 0) tip.addScaledVector(away, Math.pow(Math.min(1, -t / -INTRO), 2))
-  const tEnd = sim.plan.tEnd
-  if (t > tEnd) tip.addScaledVector(away, Math.pow(Math.min(1, (t - tEnd) / 0.9), 2) * 1.4)
-  return tip
-}
+const end = () => world.sim.endTime + OUTRO
 
 function frame(now: number) {
   const dt = Math.min(0.1, (now - last) / 1000)
   last = now
   fpsAvg += (1 / Math.max(dt, 1e-3) - fpsAvg) * 0.05
+  const sim = world.sim
   if (view.playing && sim.t < end()) {
     acc += dt * view.rate
     const a = performance.now()
@@ -124,18 +66,12 @@ function frame(now: number) {
     simMs += (performance.now() - a - simMs) * 0.1
     if (n === 40) acc = 0
   }
-  paste.update()
-  if (sim.steps % 12 === 0) paste.updateOcclusion()
-  threadMesh.update(sim.thread)
-  const nz = sim.nozzle
-  travel.set(nz.dirX, nz.dirY)
-  tube.pose(tubeTip(sim.t), travel, nz.phase === 'draw' ? nz.speed : 0, dt)
-  tube.setSqueeze(sim.squeeze * 0.9)
-  tube.group.visible = sim.t < sim.plan.tEnd + 1.2
-  renderer.render(scene, camera)
+  world.sync(dt)
+  world.render()
+  world.adapt(dt * 1000)
 
   clockEl.textContent = `${Math.max(0, sim.t).toFixed(2)} s`
-  scrub.value = String(Math.round(((sim.t - INTRO) / (end() - INTRO)) * 1000))
+  scrub.value = String(Math.round(((sim.t + INTRO_LEAD) / (end() + INTRO_LEAD)) * 1000))
   if (now - lastStatus > 400) {
     lastStatus = now
     renderStatus()
@@ -144,9 +80,10 @@ function frame(now: number) {
 }
 
 function renderStatus() {
+  const sim = world.sim
   const d = derive(phys, (kin.beadWidth * 1e-3) / 2)
   statusEl.textContent =
-    `${stage.backend} · ${fpsAvg.toFixed(0)} fps · sim ${simMs.toFixed(1)} ms/frame\n` +
+    `${world.stage.backend} · ${world.quality} · ${fpsAvg.toFixed(0)} fps · ×${world.dpr.toFixed(2)} px · sim ${simMs.toFixed(1)} ms/frame\n` +
     `h_hold ${(d.holdHeight * 1e3).toFixed(1)} mm · ℓc ${(d.capillaryLength * 1e3).toFixed(2)} mm · Bo ${d.bond.toFixed(1)} · μp ${d.plasticViscosity.toFixed(1)} Pa·s\n` +
     `V* ${sim.stats.vStar.toFixed(2)} · tube used ${(sim.squeeze * 100).toFixed(0)}% · on paper ${(sim.field.totalVolume() * 1e6).toFixed(2)} ml`
 }
@@ -156,16 +93,13 @@ playBtn.addEventListener('click', () => setPlaying(!view.playing))
 function setPlaying(v: boolean) {
   view.playing = v
   playBtn.textContent = v ? 'Pause' : 'Play'
-  if (v && sim.t >= end() - 1e-3) restart()
+  if (v && world.sim.t >= end() - 1e-3) restart()
 }
 document.querySelector('#restart')!.addEventListener('click', () => {
   restart()
   setPlaying(true)
 })
-scrub.addEventListener('change', () => {
-  const t = INTRO + (Number(scrub.value) / 1000) * (end() - INTRO)
-  restart(t)
-})
+scrub.addEventListener('change', () => restart(-INTRO_LEAD + (Number(scrub.value) / 1000) * (end() + INTRO_LEAD)))
 window.addEventListener('keydown', (e) => {
   if (e.code === 'Space' && !(e.target instanceof HTMLInputElement)) {
     e.preventDefault()
@@ -173,40 +107,51 @@ window.addEventListener('keydown', (e) => {
   }
 })
 
+const pose = world.stage.pose
 const look = {
   exposure: 1.0,
-  environment: 0.5,
-  key: 2.8,
-  rim: 0.9,
-  paperTone: 0.5,
-  occlusion: 0.75,
+  environment: world.scene.environmentIntensity,
+  gloss: 1,
+  key: world.stage.key.intensity,
+  rim: world.stage.rim.intensity,
+  paperTone: 1.0,
+  occlusion: 0.8,
   base: '#eea000',
   shadowTint: '#d0780a',
   highlightTint: '#ffe08a',
-  roughness: 0.32,
-  clearcoat: 0.9,
-  striations: 1,
+  roughness: 0.5,
+  clearcoat: 1,
+  striations: 0.6,
   pits: 1,
-  pitch: stage.rig.pitch,
-  yaw: stage.rig.yaw,
-  roll: stage.rig.roll,
-  fov: stage.rig.fov,
-  frame: stage.rig.frameWidth * 1000,
+  tiltShift: 1,
+  focusBand: 0.16,
+  grain: 0.045,
+  vignette: 0.35,
+  pitch: pose.pitch,
+  yaw: pose.yaw,
+  roll: pose.roll,
+  fov: pose.fov,
+  frame: pose.frameWidth * 1000,
   targetX: 0,
   targetZ: 4,
 }
 
 function applyLook() {
+  const { renderer, scene, stage, post } = world
   renderer.toneMappingExposure = look.exposure
   scene.environmentIntensity = look.environment
   stage.key.intensity = look.key
   stage.rim.intensity = look.rim
-  if (paper) {
-    paper.uniforms.tone.value = look.paperTone
-    paper.uniforms.occlusionStrength.value = look.occlusion
+  post.uniforms.tiltShift.value = look.tiltShift
+  post.uniforms.focusBand.value = look.focusBand
+  post.uniforms.grain.value = look.grain
+  post.uniforms.vignette.value = look.vignette
+  if (world.paper) {
+    world.paper.uniforms.tone.value = look.paperTone
+    world.paper.uniforms.occlusionStrength.value = look.occlusion
   }
-  if (paste) {
-    const u = paste.uniforms
+  if (world.paste) {
+    const u = world.paste.uniforms
     u.base.value.set(look.base)
     u.shadowTint.value.set(look.shadowTint)
     u.highlightTint.value.set(look.highlightTint)
@@ -214,10 +159,10 @@ function applyLook() {
     u.clearcoat.value = look.clearcoat
     u.striation.value = look.striations
     u.pits.value = look.pits
-    ;(threadMesh?.mesh.material as THREE.MeshPhysicalMaterial | undefined)?.color.set(look.base)
+    world.paste.setGloss(look.gloss)
   }
-  Object.assign(stage.rig, { pitch: look.pitch, yaw: look.yaw, roll: look.roll, fov: look.fov, frameWidth: look.frame / 1000 })
-  stage.rig.target.set(look.targetX / 1000, 0, look.targetZ / 1000)
+  Object.assign(pose, { pitch: look.pitch, yaw: look.yaw, roll: look.roll, fov: look.fov, frameWidth: look.frame / 1000 })
+  pose.target.set(look.targetX / 1000, 0, look.targetZ / 1000)
   stage.placeCamera()
 }
 
@@ -279,6 +224,7 @@ fe.add(phys, 'beadAspect', 0.3, 1, 0.01).name('fresh bead height/width').onChang
 fe.add(kin, 'flowExponent', 0, 1, 0.01).name('squeeze-vs-speed φ').onChange(physicsChanged)
 fe.add(kin, 'areaRatioMax', 1, 3, 0.05).name('max A/A₀ on slow curves').onChange(physicsChanged)
 fe.add(phys, 'dwellFlowRatio', 0, 1, 0.01).name('first-touch flow (×Q₀)').onChange(physicsChanged)
+fe.close()
 
 const ft = gui.addFolder('Thread & touchdown')
 ft.add(kin, 'nozzleHeight', 1, 12, 0.1).name('nozzle height (mm)').onChange(physicsChanged)
@@ -290,11 +236,13 @@ ft.add(phys, 'snapStretch', 1.2, 6, 0.05).name('snap at stretch L/L₀').onChang
 ft.add(phys, 'snapRadius', 0.05, 0.6, 0.01).name('snap at neck (× rₑ)').onChange(physicsChanged)
 ft.add(phys, 'tailPeakFraction', 0, 1, 0.01).name('tail peak volume').onChange(physicsChanged)
 ft.add(phys, 'tailPeakRadius', 0.2, 1.2, 0.01).name('tail peak radius').onChange(physicsChanged)
+ft.close()
 
 const fs = gui.addFolder('Settling')
 fs.add(phys, 'settleTime', 0, 3, 0.05).name('flow window (s)').onChange(physicsChanged)
 fs.add(scaled(phys, 'edgeRounding', 1e7), 'v', 0, 20, 0.1).name('edge rounding (×1e-7 m²/s)').onChange(physicsChanged)
 fs.add(phys, 'edgeRoundingTime', 0, 1.5, 0.05).name('rounding time (s)').onChange(physicsChanged)
+fs.close()
 
 const fk = gui.addFolder('Timing')
 fk.add(kin, 'drawDuration', 8, 15, 0.1).name('drawing phase (s)').onChange(physicsChanged)
@@ -305,7 +253,8 @@ fk.close()
 
 const fl = gui.addFolder('Look')
 fl.add(look, 'exposure', 0.3, 2.5, 0.01).onChange(applyLook)
-fl.add(look, 'environment', 0, 2, 0.01).name('studio reflections').onChange(applyLook)
+fl.add(look, 'environment', 0, 2, 0.01).name('studio fill').onChange(applyLook)
+fl.add(look, 'gloss', 0, 3, 0.01).name('wet highlights').onChange(applyLook)
 fl.add(look, 'key', 0, 8, 0.05).name('key light').onChange(applyLook)
 fl.add(look, 'rim', 0, 4, 0.05).name('rim light').onChange(applyLook)
 fl.add(look, 'paperTone', 0.3, 3, 0.01).name('paper tone').onChange(applyLook)
@@ -317,6 +266,10 @@ fl.add(look, 'roughness', 0.05, 0.8, 0.01).name('paint roughness').onChange(appl
 fl.add(look, 'clearcoat', 0, 1, 0.01).name('wet clearcoat').onChange(applyLook)
 fl.add(look, 'striations', 0, 3, 0.05).name('nozzle striations').onChange(applyLook)
 fl.add(look, 'pits', 0, 3, 0.05).name('air pits').onChange(applyLook)
+fl.add(look, 'tiltShift', 0, 1, 0.01).name('tilt-shift blur').onChange(applyLook)
+fl.add(look, 'focusBand', 0.02, 0.5, 0.01).name('focus band').onChange(applyLook)
+fl.add(look, 'grain', 0, 0.2, 0.005).name('film grain').onChange(applyLook)
+fl.add(look, 'vignette', 0, 1, 0.01).name('vignette').onChange(applyLook)
 fl.add(look, 'pitch', 0, 70, 0.5).name('camera pitch (°)').onChange(applyLook)
 fl.add(look, 'yaw', -40, 40, 0.5).name('camera yaw (°)').onChange(applyLook)
 fl.add(look, 'roll', -5, 5, 0.1).name('camera roll (°)').onChange(applyLook)
@@ -338,7 +291,8 @@ gui.add(
 gui.add(
   {
     reset: () => {
-      Object.assign(phys, defaultPhysics)
+      Object.assign(phys, sitePhysics)
+      Object.assign(kin, siteKinematics)
       try {
         localStorage.removeItem(PRESET_KEY)
       } catch {
@@ -352,8 +306,8 @@ gui.add(
 ).name('Reset physics')
 if (innerWidth < 700) gui.close()
 
-build()
-if (!view.playing) sim.advanceTo(sim.endTime)
+restart()
+if (!view.playing) world.sim.advanceTo(world.sim.endTime)
 setPlaying(view.playing)
 renderStatus()
 requestAnimationFrame(frame)
@@ -370,6 +324,6 @@ requestAnimationFrame(frame)
     applyLook()
   },
   get time() {
-    return sim.t
+    return world.sim.t
   },
 }

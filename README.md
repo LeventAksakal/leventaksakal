@@ -3,9 +3,25 @@
 Personal site whose intro is the name **Levent Aksakal** written in yellow paint paste from a tube.
 The build follows milestones: strokes → physics → look → transition/content → hardening.
 
-**Status: milestone 2 (paste physics in the lit 3D scene).** `npm run dev`, then open
-`/lab/paste/` (physics + look, all parameters in the panel) or `/lab/strokes/` (lettering and timing).
-Add `?font=damion` for the fallback lettering, `?webgl` to force the WebGL2 backend.
+**Status: first full preview of the site.** `npm run dev`, then open `/` (the site), `/lab/paste/`
+(physics + look, every parameter in the panel) or `/lab/strokes/` (lettering and timing).
+
+URL switches: `?quality=high|medium|low`, `?final` (skip straight to the settled page),
+`?webgl` (force the WebGL2 backend), `?font=damion` (labs only).
+
+### How the home page runs
+
+1. The charcoal paper fades up from black while the tube comes in from the upper right.
+2. The tube writes the name (Tier-1 simulation in real time, ~12.5 s), leaves, the paste settles.
+3. Camera and name glide so the name lands top-centre at nav size; the paper dims; the content fades in.
+4. From then on the scene renders only on demand (resize, hover). Hovering or focusing the name slides
+   the reflected studio lights, so a highlight glides along the letters.
+
+**Skip intro** is focusable from the first frame; any key, click, scroll or touch also skips. Skipping,
+repeat visits (`localStorage`) and `prefers-reduced-motion` all jump to the settled state by loading
+`src/assets/bake/nycd.bin.gz` — the height field from an offline run of the same deterministic
+simulation. Re-bake after changing `src/physics/preset.ts` or the strokes: `npx tsx tools/sim/bake.ts`.
+Clicking the name while at home replays the intro.
 
 ## Layout
 
@@ -19,7 +35,9 @@ Add `?font=damion` for the fallback lettering, `?webgl` to force the WebGL2 back
 | `src/physics/heightfield.ts` | Everything on the paper: deposition sweeps and viscoplastic relaxation of wet tiles. |
 | `src/physics/thread.ts` | Airborne thread as an XPBD viscous rod: feed, sag, necking, snap. |
 | `src/physics/simulation.ts` | Tier-1 orchestration at a fixed 240 Hz: extrusion, touchdown, coiling, pen lifts, tail peaks. |
-| `src/scene/` | three.js WebGPURenderer + TSL: charcoal paper, paste surface, thread mesh, paint tube, lights. |
+| `src/scene/` | three.js WebGPURenderer + TSL: baked charcoal paper, paste surface, thread mesh, paint tube, studio lights, post. |
+| `src/site/` | Home page orchestration (GSAP) and styles; content is plain HTML in `index.html`. |
+| `src/physics/preset.ts`, `bake.ts` | The shipped parameter set; baked final state codec. |
 | `src/lab/` | Debug pages (`?debug`-style tuning with lil-gui). |
 | `tools/` | Python/Node tooling for lettering and screenshots. |
 

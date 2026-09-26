@@ -1,7 +1,7 @@
 // Screenshots of the paste lab at given simulation times (dev server on :5173).
 // Usage: node tools/shoot-paste.mjs <url> <t1,t2,..> <outPrefix> <WxH> '<look JSON>'
 import { chromium } from 'playwright'
-const base = process.argv[2] ?? 'http://localhost:5173/lab/paste/?dpr=1&lowres'
+const base = process.argv[2] ?? 'http://127.0.0.1:5173/lab/paste/?dpr=1&lowres'
 const times = (process.argv[3] ?? '20').split(',').map(Number)
 const out = process.argv[4] ?? 'tools/out/paste'
 const size = (process.argv[5] ?? '1280x720').split('x').map(Number)

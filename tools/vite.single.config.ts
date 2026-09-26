@@ -1,5 +1,5 @@
 // Builds one lab page as a single JS bundle with inlined assets, for sharing as one HTML file.
-// Usage: LAB=paste OUT=/some/dir npx vite build -c tools/vite.single.config.ts
+// Usage: LAB=paste|strokes|site OUT=/some/dir npx vite build -c tools/vite.single.config.ts
 import { resolve } from 'node:path'
 import { defineConfig } from 'vite'
 
@@ -13,7 +13,7 @@ export default defineConfig({
     assetsInlineLimit: 100_000_000,
     cssCodeSplit: false,
     rollupOptions: {
-      input: resolve(root, `lab/${process.env.LAB ?? 'paste'}/index.html`),
+      input: process.env.LAB === 'site' ? resolve(root, 'index.html') : resolve(root, `lab/${process.env.LAB ?? 'paste'}/index.html`),
       output: { inlineDynamicImports: true },
     },
   },

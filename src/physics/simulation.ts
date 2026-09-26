@@ -332,6 +332,17 @@ export class PasteSimulation {
     if (k >= 1) th.state = 'none'
   }
 
+  /** Jump to the settled end state with a pre-baked field (already decoded into `field`). */
+  finishFromBake() {
+    this.t = this.endTime
+    this.nozzle = sampleNozzle(this.plan, this.t, this.kin)
+    this.updateTip()
+    this.thread.state = 'none'
+    this.stroke = -1
+    this.stats.extruded = this.field.totalVolume()
+    this.stats.deposited = this.stats.extruded
+  }
+
   /** Run until time t (s) without rendering. Deterministic. */
   advanceTo(t: number) {
     while (this.t + this.dt <= t) this.step()

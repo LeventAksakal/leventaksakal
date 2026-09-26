@@ -38,3 +38,13 @@ export function toHalf(v: number): number {
   const e = (f >> 23) & 0x1ff
   return baseTable[e] + ((f & 0x007fffff) >> shiftTable[e])
 }
+
+/** float16 bits → number (sufficient for heights; no NaN handling). */
+export function fromHalf(h: number): number {
+  const s = h & 0x8000 ? -1 : 1
+  const e = (h >> 10) & 0x1f
+  const m = h & 0x3ff
+  if (e === 0) return s * m * 2 ** -24
+  if (e === 31) return s * Infinity
+  return s * 2 ** (e - 15) * (1 + m / 1024)
+}

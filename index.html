@@ -2,18 +2,105 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
     <title>Levent Aksakal</title>
-    <style>
-      html, body { margin: 0; height: 100%; background: #141517; color: #e6e1d8; font: 15px/1.5 system-ui, sans-serif; }
-      main { min-height: 100%; display: grid; place-content: center; gap: 8px; padding-inline: 16px; }
-      a { color: #f2b705; }
-    </style>
+    <meta name="description" content="Levent Aksakal, software engineer in Bursa, Türkiye: systems from the database to the browser, and low-latency media over QUIC." />
+    <meta name="theme-color" content="#0e0f11" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Geist+Mono:wght@400&display=swap"
+    />
+    <link rel="stylesheet" href="/src/site/site.css" />
+    <script>document.documentElement.classList.add('js')</script>
   </head>
-  <body>
-    <main>
-      <p>Levent Aksakal. New site in progress.</p>
-      <p><a href="/lab/strokes/">Stroke lab (milestone 1)</a></p>
+  <body class="is-intro">
+    <canvas id="scene" aria-hidden="true"></canvas>
+    <img id="fallback-name" alt="" hidden />
+
+    <a id="home" href="/" aria-label="Levent Aksakal, home"><span class="sr-only">Levent Aksakal</span></a>
+    <button id="skip" type="button">Skip intro</button>
+
+    <main id="content">
+      <div class="col">
+      <section class="intro" aria-label="About">
+        <p class="lede">
+          I’m a software engineer in Bursa, Türkiye. I like building whole systems, from the database and the server
+          to the browser, and lately I work on low-latency live media over QUIC.
+        </p>
+      </section>
+
+      <section class="block" aria-labelledby="work-h">
+        <h2 id="work-h">Work</h2>
+        <ul class="projects">
+          <li>
+            <div class="row"><h3>MOQtail</h3><span class="meta">active</span></div>
+            <p>
+              An open-source Media over QUIC library that tracks the latest MoQ draft, in TypeScript and Rust. I’m one of
+              its main contributors.
+            </p>
+            <p class="links"><a href="https://moqtail.dev">moqtail.dev</a><a href="https://github.com/kixelated/moqtail">source</a></p>
+          </li>
+          <li>
+            <div class="row"><h3>Kampüs</h3><span class="meta">specification</span></div>
+            <p>
+              An open-source platform for university life in Türkiye: schedules, meals, announcements and events, plus a
+              community layer for verified students. Built for students, by students.
+            </p>
+          </li>
+          <li>
+            <div class="row"><h3>Cut’n Dolls</h3><span class="meta">pre-production</span></div>
+            <p>
+              A multiplayer physics party game in Unreal Engine 5, made with a team of three. Run a market stall by day,
+              fight the other shopkeepers by night.
+            </p>
+          </li>
+          <li>
+            <div class="row"><h3>Kind cluster load testing</h3><span class="meta">2024</span></div>
+            <p>
+              A Kubernetes test bench: Kind clusters, k6 load tests, Prometheus and Grafana, with scripts that stand the
+              whole thing up.
+            </p>
+            <p class="links"><a href="https://github.com/LeventAksakal/kind-cluster-k6">source</a></p>
+          </li>
+          <li>
+            <div class="row"><h3>This site</h3><span class="meta">2026</span></div>
+            <p>
+              The name at the top is written by a simulation: a yield-stress paint leaves a nozzle as a viscous thread,
+              lands on the paper and settles until its yield stress holds it.
+            </p>
+            <p class="links"><a href="https://github.com/LeventAksakal/leventaksakal">source</a></p>
+          </li>
+        </ul>
+      </section>
+
+      <section class="block" aria-labelledby="facts-h">
+        <h2 id="facts-h">Facts</h2>
+        <ul class="facts">
+          <li>Computer engineering graduate of Özyeğin University.</li>
+          <li>
+            Interned at Constructor Technology, on a WebSocket server with Redis for video conferencing, and at TÜBİTAK
+            SAGE, on mobile test automation and Android kernel drivers.
+          </li>
+          <li>Mostly TypeScript, Rust and Vue, and whatever the problem needs.</li>
+          <li>Off the keyboard: mountaineering, rock climbing, skiing, guitar, and desserts.</li>
+        </ul>
+      </section>
+
+      <section class="block" aria-labelledby="contact-h">
+        <h2 id="contact-h">Contact</h2>
+        <p class="contact"><a href="https://github.com/LeventAksakal">github.com/LeventAksakal</a></p>
+      </section>
+
+      <footer class="foot">© 2026 Zafer Levent Aksakal</footer>
+      </div>
     </main>
+
+    <script type="module" src="/src/site/main.ts"></script>
   </body>
 </html>
