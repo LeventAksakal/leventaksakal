@@ -86,3 +86,18 @@ Python deps: `pip install -r tools/requirements.txt`.
 
 Lab specimens use subsets of Nothing You Could Do, Damion, Sacramento, Mr Dafoe (SIL OFL 1.1), Yellowtail and Homemade Apple
 (Apache 2.0) from Google Fonts. The final site ships no script font: the name is the paint.
+
+## Deploy (Cloudflare Pages)
+
+Pages project `levent-website` (direct upload, not Git-connected; production branch `main`). Build locally, then upload:
+
+```sh
+npm ci && npm run build
+WRANGLER_SEND_METRICS=false npx wrangler@latest pages deploy dist --project-name levent-website --branch dev   # preview
+```
+
+- Preview: `https://dev.levent-website.pages.dev` and `https://dev.leventaksakal.com` (CNAME to the `dev` branch alias).
+  Both, and every `*.levent-website.pages.dev` deployment URL, sit behind the Cloudflare Access app
+  "levent-website dev preview" (Google login, owner only).
+- Production: `--branch main` deploys to `leventaksakal.com`. Roll back from the project's Deployments tab
+  ("Rollback to this deployment" on the previous production build).
