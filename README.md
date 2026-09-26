@@ -99,9 +99,14 @@ render call. What keeps it there:
   within 0.01 (`node tools/paper-stats.mjs <url> <out.png>` prints them and writes crops).
 - **Shaders**: lit materials compile in parallel off the main thread against the post pass's target
   (`PassNode.compileAsync`), then one black warm-up frame builds the rest.
-- **Never black**: if 3D isn't ready after 6 s the static page shows (name image + content), and the
-  rendered name replaces it without the intro (`?slowboot=<ms>`, `0` disables). A lost GPU device
-  (`renderer.onDeviceLost`, WebGL context loss) also falls back to the static page.
+- **Slow boot is not a failure**: a cold GPU shader cache (a first visit, a private window) can take
+  seconds to compile. After 1.5 s a quiet "Loading" pulses (pure CSS, so it shows even while the main
+  thread bakes), and the intro plays once 3D is ready. The static page (name image + content) is only
+  for real failures: no WebGPU/WebGL, a boot error, a lost GPU device (`renderer.onDeviceLost`, during
+  boot too), or a boot stalled for 20 s (`?slowboot=<ms>`, `0` disables); if 3D arrives after that, it
+  replaces the image without the intro.
+- **Intro diagnostics (temporary)**: `src/site/diag.ts` logs `[intro-diag]` lines to the console: boot
+  stages, backend and GPU, intro frame rate, and why the page went straight to its final state.
 - **Chrome compatibility**: three r186 sets `swizzle: 'rgba'` on every texture view, which Chrome
   builds with the older form of that field reject (WebGPU rendering then fails); `stage.ts` drops it
   (identity, so a no-op).

@@ -20,6 +20,7 @@ import type { StrokeSet } from '../lettering/types'
 import { presetKey, siteKinematics, sitePhysics } from '../physics/preset'
 import type { CameraPose } from '../scene/stage'
 import { createWorld, type World } from '../scene/world'
+import { diag, diagBootMarks, diagRenderer, diagWarn } from './diag'
 
 const SEEN_KEY = 'site.intro-seen.v1'
 const FAST = 5 // fast-forward rate
@@ -61,29 +62,53 @@ let world: World
 
 // ---------------------------------------------------------------- boot
 performance.mark('boot:script')
-// Never a long black screen: if 3D takes more than a few seconds to boot (slow machine), show the
-// static page meanwhile; once 3D is ready the rendered name replaces the image, without the intro.
+diag('boot start', { search: location.search, reduceMotion, seen: store.get(SEEN_KEY) === '1' })
+// A slow boot (a cold shader cache compiles for seconds) is not a failure: after 1.5 s a quiet
+// "Loading" pulses (#hint.is-loading, pure CSS), and the intro plays once 3D is ready. Only a boot
+// that stalls altogether gets the static page (name image + content); if 3D arrives after that, it
+// takes over without the intro.
 let slowBoot = false
-const slowBootMs = Number(params.get('slowboot') ?? 6000) // ?slowboot=0 disables (testing)
-const slowTimer = params.has('capture') || !slowBootMs ? 0 : window.setTimeout(() => ((slowBoot = true), staticFallback()), slowBootMs)
+const stallMs = Number(params.get('slowboot') ?? 20000) // ?slowboot=0 disables (testing)
+const stallTimer =
+  params.has('capture') || !stallMs
+    ? 0
+    : window.setTimeout(() => {
+        slowBoot = true
+        diagWarn(`boot stalled (> ${stallMs} ms): showing the static page`)
+        diagBootMarks()
+        staticFallback()
+      }, stallMs)
 try {
   world = await createWorld({ canvas, forceWebGL: params.has('webgl'), worker: !params.has('capture') && !params.has('noworker') })
 } catch (err) {
-  clearTimeout(slowTimer)
-  console.warn('3D unavailable, showing the static page', err)
+  clearTimeout(stallTimer)
+  diagWarn('3D unavailable: showing the static page', err)
+  diagBootMarks()
   staticFallback()
   throw err
 }
-world.load(set, siteKinematics, sitePhysics)
-// Build every shader now (screen still black), not in the middle of the intro.
-await world.warmUp()
-clearTimeout(slowTimer)
+diagRenderer(world.renderer, { quality: world.quality, dpr: world.dpr })
 // A lost GPU device (driver reset, watchdog) would leave the canvas black: show the static page.
+// During boot nothing is on screen yet; the handler below takes over once the page is running.
 let gpuLost = false
 world.renderer.onDeviceLost = (info: unknown) => {
   if (gpuLost) return
   gpuLost = true
-  console.warn('GPU device lost, showing the static page', info)
+  clearTimeout(stallTimer)
+  diagWarn('GPU device lost during boot: showing the static page', info)
+  staticFallback()
+}
+world.load(set, siteKinematics, sitePhysics)
+// Build every shader now (screen still dark), not in the middle of the intro.
+diag('world created, compiling')
+await world.warmUp()
+clearTimeout(stallTimer)
+diag('boot ready')
+diagBootMarks()
+world.renderer.onDeviceLost = (info: unknown) => {
+  if (gpuLost) return
+  gpuLost = true
+  diagWarn(`GPU device lost in phase "${phase}": showing the static page`, info)
   removeIntroListeners()
   world.halt()
   gsap.killTweensOf([look, main, ...lines, ...deskExtras])
@@ -170,6 +195,10 @@ function frame(now: number) {
     return
   }
   const dt = Math.min(0.1, (now - last) / 1000)
+  if (phase === 'intro') {
+    introStats.frames++
+    introStats.slowest = Math.max(introStats.slowest, now - last)
+  }
   last = now
   if (phase === 'intro') {
     world.advance(dt * rate, 0.15 * rate)
@@ -216,10 +245,14 @@ let hintTimer = 0
 
 function setHint(text: string) {
   hint.textContent = text
+  hint.classList.remove('is-loading')
   hint.classList.toggle('is-on', !!text)
 }
 
+let introStats = { wall: 0, frames: 0, slowest: 0 }
 function startIntro() {
+  diag('intro start')
+  introStats = { wall: performance.now(), frames: 0, slowest: 0 }
   phase = 'intro'
   rate = 1
   body.classList.add('is-intro')
@@ -241,6 +274,15 @@ function startIntro() {
 
 function beginTransition() {
   if (phase !== 'intro') return
+  const wall = (performance.now() - introStats.wall) / 1000
+  diag('intro written, transition start', {
+    wallSeconds: +wall.toFixed(2),
+    simSeconds: +world.sim.t.toFixed(2),
+    frames: introStats.frames,
+    avgFps: +(introStats.frames / Math.max(wall, 1e-3)).toFixed(1),
+    slowestFrameMs: Math.round(introStats.slowest),
+    dpr: world.dpr,
+  })
   phase = 'transition'
   rate = 1
   removeIntroListeners()
@@ -259,6 +301,7 @@ function beginTransition() {
 }
 
 function finish() {
+  diag('final')
   phase = 'final'
   body.classList.remove('is-intro')
   store.set(SEEN_KEY, '1')
@@ -269,7 +312,8 @@ function finish() {
 }
 
 /** Jump to the settled final state (skip, repeat visit, reduced motion). */
-async function goFinal(fadeIn: boolean) {
+async function goFinal(fadeIn: boolean, reason: string) {
+  diag(`going straight to the final state: ${reason}`, { phase, simSeconds: world.sim ? +world.sim.t.toFixed(2) : null })
   removeIntroListeners()
   phase = 'transition'
   rate = 1
@@ -306,27 +350,28 @@ async function goFinal(fadeIn: boolean) {
 function advance() {
   if (phase !== 'intro') return
   if (rate === 1) {
+    diag('fast-forward')
     rate = FAST
     setHint(`×${FAST} · click again to skip`)
   } else {
-    void goFinal(true)
+    void goFinal(true, 'second click/tap/key (skip)')
   }
 }
 const onPointer = (e: PointerEvent) => {
   if (e.button === 0) advance()
 }
 const onKey = (e: KeyboardEvent) => {
-  if (e.key === 'Escape') void goFinal(true)
+  if (e.key === 'Escape') void goFinal(true, 'Escape key')
   else if (e.key === ' ' || e.key === 'Enter' || e.key === 'ArrowRight') {
     if (document.activeElement === skipLink) return
     e.preventDefault()
     advance()
   }
 }
-const onWheel = () => void goFinal(true)
+const onWheel = (e: WheelEvent) => void goFinal(true, `wheel/scroll input (deltaY ${e.deltaY})`)
 const onSkipLink = (e: Event) => {
   e.preventDefault()
-  void goFinal(false).then(() => main.focus())
+  void goFinal(false, 'skip link').then(() => main.focus())
 }
 function addIntroListeners() {
   window.addEventListener('pointerdown', onPointer)
@@ -386,6 +431,7 @@ window.addEventListener('resize', () => {
 })
 
 function staticFallback() {
+  setHint('')
   body.classList.remove('is-intro')
   canvas.hidden = true
   const img = document.querySelector<HTMLImageElement>('#fallback-name')!
@@ -403,7 +449,7 @@ function staticFallback() {
   get time() {
     return world.sim.t
   },
-  skip: () => goFinal(false),
+  skip: () => goFinal(false, 'site.skip()'),
 }
 
 if (params.has('capture')) {
@@ -433,12 +479,16 @@ if (params.has('capture')) {
   })
 } else {
   const seen = store.get(SEEN_KEY) === '1'
-  if (slowBoot) {
-    // The static page is already up: swap the image for the rendered name, no intro.
+  if (gpuLost) {
+    diag('not starting: the GPU device was lost during boot, the static page stays')
+  } else if (slowBoot) {
+    // The static page is already up (boot stalled): swap the image for the rendered name, no intro.
     canvas.hidden = false
     document.querySelector<HTMLImageElement>('#fallback-name')!.hidden = true
-    void goFinal(false)
-  } else if (reduceMotion || seen || params.has('final')) void goFinal(!reduceMotion)
-  else startIntro()
+    void goFinal(false, 'boot stalled, the static page was already shown')
+  } else if (reduceMotion || seen || params.has('final')) {
+    const why = [reduceMotion && 'prefers-reduced-motion', seen && `repeat visit (localStorage ${SEEN_KEY})`, params.has('final') && '?final'].filter(Boolean).join(', ')
+    void goFinal(!reduceMotion, why)
+  } else startIntro()
   kick()
 }
