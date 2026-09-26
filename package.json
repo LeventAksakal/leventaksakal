@@ -1,0 +1,20 @@
+{
+  "name": "leventaksakal",
+  "private": true,
+  "version": "2.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "shots": "node tools/screenshots.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.3",
+    "lil-gui": "^0.21.0",
+    "playwright": "^1.56.1",
+    "typescript": "~5.9",
+    "vite": "^7.3.6"
+  }
+}

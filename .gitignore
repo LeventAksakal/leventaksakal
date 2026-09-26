@@ -3,3 +3,5 @@ dist
 .DS_Store
 *.local
 .github/instructions/*
+tools/out/*
+!tools/out/specimen-*.png

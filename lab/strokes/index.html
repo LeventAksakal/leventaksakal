@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Paste Stroke Lab</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600&family=Spline+Sans+Mono:wght@400;500&display=swap"
+    />
+    <link rel="stylesheet" href="/src/lab/strokes.css" />
+  </head>
+  <body>
+    <main class="wrap">
+      <header class="head">
+        <h1>Paste stroke lab</h1>
+        <p class="lede">
+          Milestone 1: the name as centerline strokes, written in order with pen lifts and a hand-like speed
+          profile. No paint physics yet. The line shows the nozzle path; turn on <em>bead width</em> to preview how
+          the deposition law A = Q/U will thicken slow curves.
+        </p>
+      </header>
+
+      <div class="bench">
+      <section class="stage" aria-label="Stroke animation">
+        <canvas id="stage" aria-hidden="true"></canvas>
+        <div class="transport">
+          <button id="play" type="button" aria-label="Pause">Pause</button>
+          <input id="scrub" type="range" min="0" max="1000" value="0" step="1" aria-label="Timeline position" />
+          <output id="clock" class="mono">0.00 s</output>
+        </div>
+        <dl class="stats mono" id="stats"></dl>
+      </section>
+      <aside class="controls" id="controls" aria-label="Kinematic parameters"></aside>
+      </div>
+
+      <section class="chart" aria-labelledby="chart-h">
+        <h2 id="chart-h">Nozzle speed over time</h2>
+        <p class="note">Two-thirds power law: speed ∝ (radius of curvature)<sup>1/3</sup>. Shaded bands are pen lifts. Dips are cusps, retraces and tight loops.</p>
+        <canvas id="speed" aria-label="Nozzle speed chart"></canvas>
+      </section>
+
+      <section class="fonts" aria-labelledby="fonts-h">
+        <h2 id="fonts-h">Candidate letterforms</h2>
+        <p class="note">
+          “Bead at 400 mm” is the font’s own stroke weight when the name is 400 mm wide. The brief wants a 3–5 mm bead, so a
+          font whose weight lands there already has counters and spacing that suit paste.
+        </p>
+        <ul class="font-list" id="font-list"></ul>
+      </section>
+    </main>
+    <script type="module" src="/src/lab/strokes.ts"></script>
+  </body>
+</html>
