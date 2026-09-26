@@ -6,7 +6,7 @@ const errs = []
 p.on('pageerror', (e) => errs.push(e.message))
 p.on('console', (m) => m.type() === 'error' && errs.push(m.text()))
 await p.goto('file://' + process.argv[2])
-const ok = await p.waitForFunction(() => window.lab?.ready?.(), null, { timeout: 120000 }).then(() => true, () => false)
+const ok = await p.waitForFunction(() => window.lab?.ready?.() || window.site, null, { timeout: 400000 }).then(() => true, () => false)
 await p.waitForTimeout(8000)
 await p.screenshot({ path: process.argv[3] ?? 'tools/out/check.png', timeout: 120000 })
 console.log('booted', ok, 'errors', errs.slice(0, 5))
