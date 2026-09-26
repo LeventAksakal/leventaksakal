@@ -4,8 +4,9 @@
  *  intro       paper fades up, the tube writes the name (simulation in real time)
  *  transition  camera and name glide so the name lands top-centre at nav size; the desk
  *              statement and label rise in (one reveal)
- *  final       static scene, rendered on demand: resize, scroll (the paper dims and the
- *              studio highlight slides along the name), hover on the name
+ *  final       static scene, rendered only on demand (resize, hover on the name); the render
+ *              loop stops when idle. Scrolling never touches WebGL: a CSS overlay dims the
+ *              paper under the content (opacity only, composited)
  *
  * During the intro a click or tap fast-forwards; a second one skips to the end (so does
  * Escape, scrolling, or the keyboard skip link). Skips, repeat visits and reduced motion use
@@ -33,8 +34,9 @@ const home = document.querySelector<HTMLAnchorElement>('#home')!
 const hint = document.querySelector<HTMLParagraphElement>('#hint')!
 const skipLink = document.querySelector<HTMLAnchorElement>('#skip-link')!
 const main = document.querySelector<HTMLElement>('#main')!
-const lines = [...document.querySelectorAll<HTMLElement>('.statement .line')]
-const deskExtras = [...document.querySelectorAll<HTMLElement>('.desk .label, .desk .cue')]
+const dimLayer = document.querySelector<HTMLElement>('#dim')!
+const lines = [...document.querySelectorAll<HTMLElement>('.desk .lead')]
+const deskExtras = [...document.querySelectorAll<HTMLElement>('.desk .cue')]
 
 const store = {
   get: (k: string) => {
@@ -59,13 +61,15 @@ let world: World
 
 // ---------------------------------------------------------------- boot
 try {
-  world = await createWorld({ canvas })
+  world = await createWorld({ canvas, forceWebGL: params.has('webgl'), worker: !params.has('capture') && !params.has('noworker') })
 } catch (err) {
   console.warn('3D unavailable, showing the static page', err)
   staticFallback()
   throw err
 }
 world.load(set, siteKinematics, sitePhysics)
+// Build every shader now (screen still black), not in the middle of the intro.
+await world.warmUp()
 const bakeBytes: Promise<Uint8Array | null> = fetch(bakeUrl)
   .then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(String(r.status)))))
   .then((b) => new Uint8Array(b))
@@ -122,29 +126,28 @@ function placeLink() {
 
 // ---------------------------------------------------------------- loop
 let needsRender = true
+let looping = false
 let last = performance.now()
-let acc = 0
 let rate = 1
+/** Start the frame loop if it has stopped (it stops by itself once the page is static). */
+function kick() {
+  if (looping) return
+  looping = true
+  last = performance.now()
+  requestAnimationFrame(frame)
+}
 const requestRender = () => {
   needsRender = true
+  kick()
 }
 
 function frame(now: number) {
   const dt = Math.min(0.1, (now - last) / 1000)
   last = now
   if (phase === 'intro') {
-    const sim = world.sim
-    acc += dt * rate
-    let n = 0
-    const cap = 48 * rate
-    while (acc >= sim.dt && n < cap) {
-      sim.step()
-      acc -= sim.dt
-      n++
-    }
-    if (n >= cap) acc = 0
+    world.advance(dt * rate, 48 * rate)
     world.sync(dt * rate)
-    if (sim.t >= sim.endTime) beginTransition()
+    if (world.sim.t >= world.sim.endTime) beginTransition()
     needsRender = true
     world.adapt(dt * 1000)
   } else if (phase === 'transition') {
@@ -155,19 +158,30 @@ function frame(now: number) {
     world.render()
     needsRender = false
   }
+  if (phase === 'final') {
+    looping = false // nothing moves: sleep until the next requestRender()
+    return
+  }
   requestAnimationFrame(frame)
 }
 
-// ---------------------------------------------------------------- scroll ↔ scene
-const desk = { dim: 0.22 } // paper dimming on the first screen
+// ---------------------------------------------------------------- scroll → dim overlay
+const desk = { dim: 0.22 } // paper dimming on the first screen (in the scene)
+let scrollQueued = false
 function applyScroll() {
-  const h = Math.max(1, main.clientHeight)
-  const p = Math.min(1, main.scrollTop / (h * 0.8))
-  world.paper.uniforms.dim.value = desk.dim + (0.9 - desk.dim) * p
-  world.setGlossRotation(gloss.y + main.scrollTop * 0.0007)
-  requestRender()
+  scrollQueued = false
+  const p = Math.min(1, main.scrollTop / Math.max(1, main.clientHeight * 0.8))
+  dimLayer.style.opacity = (p * 0.45).toFixed(3)
 }
-main.addEventListener('scroll', () => phase === 'final' && applyScroll(), { passive: true })
+main.addEventListener(
+  'scroll',
+  () => {
+    if (phase !== 'final' || scrollQueued) return
+    scrollQueued = true
+    requestAnimationFrame(applyScroll)
+  },
+  { passive: true },
+)
 
 // ---------------------------------------------------------------- phases
 const look = { mix: 0 }
@@ -190,11 +204,11 @@ function startIntro() {
   world.post.uniforms.fade.value = 0
   gsap.to(world.post.uniforms.fade, { value: 1, duration: 0.8, ease: 'power1.out' })
   main.scrollTop = 0
+  dimLayer.style.opacity = '0'
   gsap.set(main, { autoAlpha: 0 })
   setHint('')
   clearTimeout(hintTimer)
   hintTimer = window.setTimeout(() => phase === 'intro' && setHint('Click to fast-forward'), 1600)
-  acc = 0
   addIntroListeners()
 }
 
@@ -224,6 +238,7 @@ function finish() {
   blendPose(introPose, navPose(), 1)
   placeLink()
   applyScroll()
+  requestRender()
 }
 
 /** Jump to the settled final state (skip, repeat visit, reduced motion). */
@@ -233,9 +248,14 @@ async function goFinal(fadeIn: boolean) {
   rate = 1
   setHint('')
   gsap.killTweensOf([look, world.post.uniforms.fade, world.paper.uniforms.dim, world.post.uniforms.tiltShift, main, ...lines, ...deskExtras])
+  world.halt()
   const bytes = await bakeBytes
   const ok = bytes ? await world.applyBake(bytes, key) : false
-  if (!ok) world.sim.advanceTo(world.sim.endTime) // no bake: simulate (slower, same result)
+  if (!ok) {
+    // No bake: simulate from scratch here (slower, same result).
+    world.load(set, siteKinematics, sitePhysics, true)
+    world.sim.advanceTo(world.sim.endTime)
+  }
   world.sync(0)
   look.mix = 1
   world.post.uniforms.tiltShift.value = 0
@@ -305,6 +325,7 @@ home.addEventListener('click', (e) => {
     onComplete: () => {
       world.load(set, siteKinematics, sitePhysics)
       startIntro()
+      kick()
     },
   })
 })
@@ -317,7 +338,7 @@ const sweep = (to: number) =>
     duration: 0.9,
     ease: 'sine.inOut',
     onUpdate: () => {
-      world.setGlossRotation(gloss.y + main.scrollTop * 0.0007)
+      world.setGlossRotation(gloss.y)
       requestRender()
     },
   })
@@ -348,6 +369,7 @@ function staticFallback() {
 
 // ---------------------------------------------------------------- go
 ;(window as unknown as { site: object }).site = {
+  world,
   get phase() {
     return phase
   },
@@ -386,5 +408,5 @@ if (params.has('capture')) {
   const seen = store.get(SEEN_KEY) === '1'
   if (reduceMotion || seen || params.has('final')) void goFinal(!reduceMotion)
   else startIntro()
-  requestAnimationFrame(frame)
+  kick()
 }

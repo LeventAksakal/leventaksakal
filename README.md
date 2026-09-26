@@ -12,10 +12,13 @@ URL switches: `?quality=high|medium|low`, `?final` (skip straight to the settled
 ### How the home page runs
 
 1. The charcoal paper fades up from black while the tube comes in from the upper right.
-2. The tube writes the name (Tier-1 simulation in real time, ~12.5 s), leaves, the paste settles.
+2. The tube writes the name (Tier-1 simulation in real time in a Web Worker, ~12.5 s), leaves, the paste settles.
 3. Camera and name glide so the name lands top-centre at nav size; the paper dims; the content fades in.
-4. From then on the scene renders only on demand (resize, hover). Hovering or focusing the name slides
-   the reflected studio lights, so a highlight glides along the letters.
+4. From then on the scene renders only on demand (resize, hover) and the frame loop sleeps. Scrolling
+   never touches WebGL: a CSS overlay (`#dim`, opacity only) recedes the paper under the content.
+   Hovering or focusing the name slides the reflected studio lights, so a highlight glides along the letters.
+
+Page text is taken verbatim from the v1 site (`content/v1-content.json`).
 
 **Skip intro** is focusable from the first frame; any key, click, scroll or touch also skips. Skipping,
 repeat visits (`localStorage`) and `prefers-reduced-motion` all jump to the settled state by loading
@@ -35,11 +38,12 @@ Clicking the name while at home replays the intro.
 | `src/physics/heightfield.ts` | Everything on the paper: deposition sweeps and viscoplastic relaxation of wet tiles. |
 | `src/physics/thread.ts` | Airborne thread as an XPBD viscous rod: feed, sag, necking, snap. |
 | `src/physics/simulation.ts` | Tier-1 orchestration at a fixed 240 Hz: extrusion, touchdown, coiling, pen lifts, tail peaks. |
+| `src/physics/sim.worker.ts` | Runs the simulation off the main thread; the page renders a mirror fed with changed tiles only. |
 | `src/scene/` | three.js WebGPURenderer + TSL: baked charcoal paper, paste surface, thread mesh, paint tube, studio lights, post. |
 | `src/site/` | Home page orchestration (GSAP) and styles; content is plain HTML in `index.html`. |
 | `src/physics/preset.ts`, `bake.ts` | The shipped parameter set; baked final state codec. |
 | `src/lab/` | Debug pages (`?debug`-style tuning with lil-gui). |
-| `tools/` | Python/Node tooling for lettering and screenshots. |
+| `tools/` | Python/Node tooling for lettering, screenshots and benchmarks (below). |
 
 ## The paste model (Tier 1)
 
@@ -65,7 +69,28 @@ Deterministic, fixed-step, CPU; rendering never feeds back into physics, so a ru
 `npx tsx tools/sim/run.ts` runs the whole simulation headless and prints timing and volume balance.
 
 Deviation from the brief, for now: the height field runs on the CPU (it is deterministic and bake-friendly,
-and the wet region is small). Moving it to a GPU ping-pong pass is a performance option for milestone 5.
+and the wet region is small), in a Web Worker. Moving it to a GPU ping-pong pass remains an option.
+
+## Performance
+
+Budget per intro frame on the main thread: sync the worker's changed tiles into the paste texture, then one
+render call. What keeps it there:
+
+- **Simulation in a worker** (`?noworker` runs it inline). `relax()` tests the yield condition on |∇h|²
+  (most wet paste is locked, so no square root) and skips tiles whose faces were all locked with nothing
+  changed around them since. Both are exact: the settled field is bit-identical to the previous version.
+- **Change tracking per 16×16 tile.** Only changed tiles are converted to float16; only their texture
+  layers upload (one `DataArrayTexture`, `addLayerUpdate`); the paper's contact occlusion updates
+  incrementally.
+- **One paste material** for every chunk (per-object layer uniform), and `world.warmUp()` compiles every
+  pipeline, shadow and post variant behind the black first frame, so nothing compiles mid-intro.
+- **Post**: one quarter-resolution blur feeds both the tilt-shift and the highlight glow (2 small passes,
+  instead of a 12-pass bloom plus a separate blur). Detail noise for the paste normals is baked once.
+- **Final state**: static; zero WebGL work while scrolling (`node tools/check-idle.mjs <url>` asserts 0 renders).
+
+Benchmarks (headless Chromium, SwiftShader: CPU numbers are meaningful, GPU numbers are not):
+`npx tsx tools/sim/bench.ts` (simulation time + field checksum), `node tools/bench-main.mjs <url>`
+(main-thread ms per intro frame), `node tools/bench-render.mjs <url>` (per-stage costs in capture mode).
 Tier 2 (MPM near the nozzle) is not started; it only goes in if it clearly beats Tier 1.
 
 ## Re-tracing the strokes
@@ -83,6 +108,9 @@ Fonts can't be traced directly: TTFs store outlines, a tube needs one open cente
 Python deps: `pip install -r tools/requirements.txt`.
 
 ## Fonts
+
+The site is set in Instrument Serif (headings, lead) and Instrument Sans (text), both SIL OFL 1.1
+(`src/assets/fonts/OFL-*.txt`), self-hosted as Latin and Latin Extended subsets split by `unicode-range`.
 
 Lab specimens use subsets of Nothing You Could Do, Damion, Sacramento, Mr Dafoe (SIL OFL 1.1), Yellowtail and Homemade Apple
 (Apache 2.0) from Google Fonts. The final site ships no script font: the name is the paint.

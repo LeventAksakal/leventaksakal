@@ -8,7 +8,7 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/site.webmanifest" />
     <title>Levent Aksakal</title>
-    <meta name="description" content="Levent Aksakal, software engineer in Bursa, Türkiye. Whole systems, from the database to the browser, and low-latency media over QUIC." />
+    <meta name="description" content="Levent Aksakal: a computer engineering graduate from Özyeğin University, currently based in Bursa, Türkiye." />
     <meta name="theme-color" content="#131417" />
     <link rel="stylesheet" href="/src/site/site.css" />
     <script>document.documentElement.classList.add('js')</script>
@@ -16,6 +16,7 @@
   <body class="is-intro">
     <a class="skip-link" id="skip-link" href="#main">Skip intro</a>
     <canvas id="scene" aria-hidden="true"></canvas>
+    <div id="dim" aria-hidden="true"></div>
     <img id="fallback-name" alt="" hidden />
     <a id="home" href="/" aria-label="Levent Aksakal, home"><span class="sr-only">Levent Aksakal</span></a>
     <p id="hint" aria-hidden="true"></p>
@@ -35,96 +36,69 @@
           <path fill="none" stroke="#fffbe9" stroke-opacity="0.8" stroke-width="0.018em" stroke-linecap="round" vector-effect="non-scaling-stroke" d="M8 7 C 50 4.4, 96 9.2, 150 6.6 S 244 4.2, 290 6.2" />
         </symbol>
         <!-- GitHub mark: primer/octicons mark-github-24 (GitHub). LinkedIn "in" bug: devicon linkedin-plain (MIT). -->
-        <symbol id="logo-github" viewBox="0 0 24 24"><path fill="currentColor" d="M10.226 17.284c-2.965-.36-5.054-2.493-5.054-5.256 0-1.123.404-2.336 1.078-3.144-.292-.741-.247-2.314.09-2.965.898-.112 2.111.36 2.83 1.01.853-.269 1.752-.404 2.853-.404 1.1 0 1.999.135 2.807.382.696-.629 1.932-1.1 2.83-.988.315.606.36 2.179.067 2.942.72.854 1.101 2 1.101 3.167 0 2.763-2.089 4.852-5.098 5.234.763.494 1.28 1.572 1.28 2.807v2.336c0 .674.561 1.056 1.235.786 4.066-1.55 7.255-5.615 7.255-10.646C23.5 6.188 18.334 1 11.978 1 5.62 1 .5 6.188.5 12.545c0 4.986 3.167 9.12 7.435 10.669.606.225 1.19-.18 1.19-.786V20.63a2.9 2.9 0 0 1-1.078.224c-1.483 0-2.359-.808-2.987-2.313-.247-.607-.517-.966-1.034-1.033-.27-.023-.359-.135-.359-.27 0-.27.45-.471.898-.471.652 0 1.213.404 1.797 1.235.45.651.921.943 1.483.943.561 0 .92-.202 1.437-.719.382-.381.674-.718.944-.943" /></symbol>
-        <symbol id="logo-linkedin" viewBox="0 0 128 128"><path fill="currentColor" d="M116 3H12a8.91 8.91 0 00-9 8.8v104.42a8.91 8.91 0 009 8.78h104a8.93 8.93 0 009-8.81V11.77A8.93 8.93 0 00116 3zM39.17 107H21.06V48.73h18.11zm-9-66.21a10.5 10.5 0 1110.49-10.5 10.5 10.5 0 01-10.54 10.48zM107 107H88.89V78.65c0-6.75-.12-15.44-9.41-15.44s-10.87 7.36-10.87 15V107H50.53V48.73h17.36v8h.24c2.42-4.58 8.32-9.41 17.13-9.41C103.6 47.28 107 59.35 107 75z" /></symbol>
+        <symbol id="logo-github" viewBox="0 0 24 24"><path fill="#f0f6fc" d="M10.226 17.284c-2.965-.36-5.054-2.493-5.054-5.256 0-1.123.404-2.336 1.078-3.144-.292-.741-.247-2.314.09-2.965.898-.112 2.111.36 2.83 1.01.853-.269 1.752-.404 2.853-.404 1.1 0 1.999.135 2.807.382.696-.629 1.932-1.1 2.83-.988.315.606.36 2.179.067 2.942.72.854 1.101 2 1.101 3.167 0 2.763-2.089 4.852-5.098 5.234.763.494 1.28 1.572 1.28 2.807v2.336c0 .674.561 1.056 1.235.786 4.066-1.55 7.255-5.615 7.255-10.646C23.5 6.188 18.334 1 11.978 1 5.62 1 .5 6.188.5 12.545c0 4.986 3.167 9.12 7.435 10.669.606.225 1.19-.18 1.19-.786V20.63a2.9 2.9 0 0 1-1.078.224c-1.483 0-2.359-.808-2.987-2.313-.247-.607-.517-.966-1.034-1.033-.27-.023-.359-.135-.359-.27 0-.27.45-.471.898-.471.652 0 1.213.404 1.797 1.235.45.651.921.943 1.483.943.561 0 .92-.202 1.437-.719.382-.381.674-.718.944-.943" /></symbol>
+        <symbol id="logo-linkedin" viewBox="0 0 128 128"><rect x="12" y="12" width="104" height="104" rx="4" fill="#fff" /><path fill="#0a66c2" d="M116 3H12a8.91 8.91 0 00-9 8.8v104.42a8.91 8.91 0 009 8.78h104a8.93 8.93 0 009-8.81V11.77A8.93 8.93 0 00116 3zM39.17 107H21.06V48.73h18.11zm-9-66.21a10.5 10.5 0 1110.49-10.5 10.5 10.5 0 01-10.54 10.48zM107 107H88.89V78.65c0-6.75-.12-15.44-9.41-15.44s-10.87 7.36-10.87 15V107H50.53V48.73h17.36v8h.24c2.42-4.58 8.32-9.41 17.13-9.41C103.6 47.28 107 59.35 107 75z" /></symbol>
       </defs>
     </svg>
 
     <main id="main" tabindex="-1">
       <div class="col">
-        <section class="desk" aria-label="Introduction">
-          <h1 class="statement">
-            <span class="line">Software engineer.</span>
-            <span class="line">Whole systems, from</span>
-            <span class="line">the database to the browser.</span>
-          </h1>
-          <aside class="label" aria-label="About the name above">
-            <p class="label-title">Levent Aksakal, <i>signature</i></p>
-            <p>2026. Cadmium yellow oil paste on charcoal paper.</p>
-            <p>400 × 46 mm · 8.3 ml · yield stress 90 Pa</p>
-            <p class="label-note">Written by a simulation each time you arrive.</p>
-          </aside>
+        <section class="desk" aria-labelledby="name-h">
+          <h1 id="name-h" class="sr-only">Zafer Levent Aksakal</h1>
+          <p class="lead">
+            I’m a computer engineering graduate from Özyeğin University, currently based in Bursa, Türkiye. I see myself as a versatile programmer who enjoys the full spectrum of development - from databases and backend servers to web frameworks, ML pipelines, and cloud infrastructure. I love building complete solutions that solve real problems. </p>
           <a class="cue" href="#work">Work</a>
         </section>
 
         <section class="work" id="work" aria-labelledby="work-h">
-          <h2 id="work-h" class="kicker">Selected work</h2>
+          <h2 id="work-h" class="kicker">Featured Projects</h2>
+          <p class="focus reveal">I work on system design and fullstack applications using Vue, TypeScript, and Rust for most of my recent work. I’ve worked with different languages and tools throughout my career and I’m flexible to adapt to whatever technology best fits the project needs.</p>
           <ol class="index" role="list">
             <li class="entry reveal">
               <h3 class="title"><a href="https://moqtail.dev">MOQtail<svg class="underline" aria-hidden="true"><use href="#stroke" /></svg></a></h3>
-              <p class="meta">Open source · 2024 to now</p>
-              <p class="desc">A Media over QUIC library that tracks the latest MoQ draft, written in TypeScript and Rust for live streaming at very low latency. I’m one of its main contributors.</p>
-              <p class="links"><a href="https://moqtail.dev">moqtail.dev</a><a href="https://github.com/kixelated/moqtail">Source</a></p>
+              <p class="meta">TypeScript · Rust · QUIC · WebCodecs · Media Streaming</p>
+              <p class="desc">Open-source Media-over-QUIC library implementing the latest MoQ draft specification. Major contributor to this TypeScript/Rust project focused on ultra-low latency live streaming.</p>
+              <p class="links"><a href="https://moqtail.dev">moqtail.dev</a><a href="https://github.com/kixelated/moqtail">GitHub</a></p>
             </li>
             <li class="entry reveal">
-              <h3 class="title"><span tabindex="0">Kampüs<svg class="underline" aria-hidden="true"><use href="#stroke" /></svg></span></h3>
-              <p class="meta">Product specification</p>
-              <p class="desc">An open-source platform for university life in Türkiye: schedules, meals, announcements and events, with a community layer for verified students. Built for students, by students.</p>
+              <h3 class="title"><a href="https://github.com/LeventAksakal/kind-cluster-k6">Kind Cluster K6 Testing<svg class="underline" aria-hidden="true"><use href="#stroke" /></svg></a></h3>
+              <p class="meta">Kubernetes · Kind · K6 · Prometheus · Grafana · Docker</p>
+              <p class="desc">Complete Kubernetes testing environment using Kind clusters with K6 load testing. Includes Prometheus monitoring, Grafana visualization, and automated deployment scripts for stress testing applications.</p>
+              <p class="links"><a href="https://github.com/LeventAksakal/kind-cluster-k6">GitHub</a></p>
+            </li>
+          </ol>
+        </section>
+
+        <section class="positions" aria-labelledby="positions-h">
+          <h2 id="positions-h" class="kicker">Previous Positions</h2>
+          <ol class="index" role="list">
+            <li class="entry reveal">
+              <h3 class="title"><a href="https://constructor.tech/">Constructor Technology<svg class="underline" aria-hidden="true"><use href="#stroke" /></svg></a></h3>
+              <p class="meta">Software Engineering Intern (Remote) · Apr 2024 – Jul 2024</p>
+              <p class="desc">WebSocket server development for web-based video conferencing product with Redis integration</p>
             </li>
             <li class="entry reveal">
-              <h3 class="title"><span tabindex="0">Cut’n Dolls<svg class="underline" aria-hidden="true"><use href="#stroke" /></svg></span></h3>
-              <p class="meta">Game · pre-production</p>
-              <p class="desc">A multiplayer physics party game in Unreal Engine 5, with a team of three. Run a market stall by day and fight the other shopkeepers by night.</p>
-            </li>
-            <li class="entry reveal">
-              <h3 class="title"><a href="https://github.com/LeventAksakal/kind-cluster-k6">Load testing bench<svg class="underline" aria-hidden="true"><use href="#stroke" /></svg></a></h3>
-              <p class="meta">Kubernetes · 2024</p>
-              <p class="desc">Kind clusters, k6 load tests, Prometheus and Grafana, with scripts that stand the whole thing up for stress-testing services.</p>
-              <p class="links"><a href="https://github.com/LeventAksakal/kind-cluster-k6">Source</a></p>
-            </li>
-            <li class="entry reveal">
-              <h3 class="title"><a href="https://github.com/LeventAksakal/leventaksakal">This site<svg class="underline" aria-hidden="true"><use href="#stroke" /></svg></a></h3>
-              <p class="meta">WebGPU · 2026</p>
-              <p class="desc">The name at the top is simulated paint: a yield-stress paste leaves the nozzle as a viscous thread, lands, and settles until its yield stress holds it. Deterministic, 240 steps a second.</p>
-              <p class="links"><a href="https://github.com/LeventAksakal/leventaksakal">Source</a></p>
+              <h3 class="title"><a href="https://www.sage.tubitak.gov.tr/">TÜBİTAK SAGE<svg class="underline" aria-hidden="true"><use href="#stroke" /></svg></a></h3>
+              <p class="meta">Software Engineering Intern (Onsite) · Aug 2024 – Sep 2024</p>
+              <p class="desc">Mobile test automation with Appium and Android kernel research for Ethernet to USB-C drivers</p>
             </li>
           </ol>
         </section>
 
         <section class="about" aria-labelledby="about-h">
           <h2 id="about-h" class="kicker">About</h2>
-          <p class="about-text reveal">
-            I work from Bursa, mostly in TypeScript and Rust. I like understanding how things work at every layer, and
-            building the whole thing rather than a slice of it.
-          </p>
-          <dl class="facts reveal">
-            <div><dt>Studied</dt><dd>Computer Engineering, Özyeğin University</dd></div>
-            <div><dt>Interned</dt><dd>Constructor Technology: WebSocket and Redis for video calls. TÜBİTAK SAGE: mobile test automation, Android kernel drivers.</dd></div>
-            <div><dt>Works in</dt><dd>TypeScript, Rust, Vue, and what the problem needs</dd></div>
-            <div><dt>Away from it</dt><dd>Mountains and rock, skiing, guitar, desserts</dd></div>
-          </dl>
-        </section>
-
-        <section class="contact" aria-labelledby="contact-h">
-          <h2 id="contact-h" class="kicker">Contact</h2>
-          <ul class="reach reveal" role="list">
-            <li>
-              <a class="github" href="https://github.com/LeventAksakal">
-                <svg class="logo" aria-hidden="true"><use href="#logo-github" /></svg>
-                <span class="where">GitHub</span><span class="handle">LeventAksakal<svg class="underline" aria-hidden="true"><use href="#stroke" /></svg></span>
-              </a>
-            </li>
-            <li>
-              <a class="linkedin" href="https://www.linkedin.com/in/levent-aksakal-85b450236/">
-                <svg class="logo" aria-hidden="true"><use href="#logo-linkedin" /></svg>
-                <span class="where">LinkedIn</span><span class="handle">levent-aksakal<svg class="underline" aria-hidden="true"><use href="#stroke" /></svg></span>
-              </a>
-            </li>
-          </ul>
+          <div class="about-text reveal">
+            <p>My approach to development is driven by curiosity and a desire to understand how things work at every layer. Whether I’m designing system architectures, optimizing database queries, or experimenting with machine learning models, I focus on creating robust, maintainable solutions that can scale with real-world demands.</p>
+            <p>Beyond coding, I’m passionate about staying active and exploring new experiences. You’ll find me playing guitar, experimenting in the kitchen with new recipes and desserts, or training calisthenics. I’m also a gamer and love immersive storytelling through films and games.</p>
+            <p>I thrive on adventure and outdoor challenges - from mountaineering and rock climbing to skiing, water skiing, hiking, and cycling. Whether it’s finding the right line down a mountain or navigating a tricky climbing route, I just love being outdoors and pushing myself physically.</p>
+          </div>
         </section>
 
         <footer class="colophon">
-          <p>Set in Bricolage Grotesque and Geist Mono. The paint is a Herschel–Bulkley paste on a viscoplastic height field, drawn with three.js.</p>
+          <ul class="reach" role="list">
+            <li><a class="github" href="https://github.com/LeventAksakal"><svg class="logo" aria-hidden="true"><use href="#logo-github" /></svg><span>GitHub</span></a></li>
+            <li><a class="linkedin" href="https://www.linkedin.com/in/levent-aksakal-85b450236/"><svg class="logo" aria-hidden="true"><use href="#logo-linkedin" /></svg><span>LinkedIn</span></a></li>
+          </ul>
           <p>© 2026 Zafer Levent Aksakal</p>
         </footer>
       </div>

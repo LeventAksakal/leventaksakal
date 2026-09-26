@@ -35,6 +35,20 @@ export interface SimulationStats {
   flow: number
 }
 
+/** What the renderer needs from a simulation running elsewhere (a worker), per frame. */
+export interface SimSnapshot {
+  t: number
+  steps: number
+  nozzle: NozzleState
+  tip: Vec3
+  contact: Vec3
+  stats: SimulationStats
+  thread: { state: ViscousThread['state']; pos: Float32Array; radius: Float32Array }
+  /** changed tiles and their cells (HeightField.readTiles layout) */
+  tiles: Int32Array
+  cells: Float32Array
+}
+
 export class PasteSimulation {
   readonly plan: WritingPlan
   readonly field: HeightField
@@ -369,6 +383,39 @@ export class PasteSimulation {
     this.stroke = -1
     this.stats.extruded = this.field.totalVolume()
     this.stats.deposited = this.stats.extruded
+  }
+
+  /** State for a mirror (see applySnapshot); takes the field's changed tiles since the last call. */
+  snapshot(): SimSnapshot {
+    const tiles = Int32Array.from(this.field.takeDirty(0))
+    return {
+      t: this.t,
+      steps: this.steps,
+      nozzle: { ...this.nozzle },
+      tip: { ...this.tip },
+      contact: { ...this.contact },
+      stats: { ...this.stats },
+      thread: { state: this.thread.state, pos: this.thread.pos.slice(), radius: this.thread.radius.slice() },
+      tiles,
+      cells: this.field.readTiles(tiles),
+    }
+  }
+
+  /**
+   * Mirror another instance's state for rendering. Only what the renderer reads is copied, so a
+   * mirror must not be stepped itself afterwards (load a fresh simulation for that).
+   */
+  applySnapshot(s: SimSnapshot) {
+    this.t = s.t
+    this.steps = s.steps
+    this.nozzle = s.nozzle
+    Object.assign(this.tip, s.tip)
+    Object.assign(this.contact, s.contact)
+    this.stats = s.stats
+    this.thread.state = s.thread.state
+    this.thread.pos.set(s.thread.pos)
+    this.thread.radius.set(s.thread.radius)
+    if (s.tiles.length) this.field.writeTiles(s.tiles, s.cells)
   }
 
   /** Run until time t (s) without rendering. Deterministic. */

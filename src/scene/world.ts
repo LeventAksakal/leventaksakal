@@ -11,10 +11,10 @@ import type { StrokeSet } from '../lettering/types'
 import { decodeBake, gunzip } from '../physics/bake'
 import type { KinematicsParams } from '../physics/kinematics'
 import type { PhysicsParams } from '../physics/params'
-import { PasteSimulation } from '../physics/simulation'
+import { PasteSimulation, type SimSnapshot } from '../physics/simulation'
 import { PaintTube } from './paintTube'
 import { bakePaper, createPaper } from './paper'
-import { bakePits, PasteSurface } from './paste'
+import { bakeDetail, PasteSurface } from './paste'
 import { createPost } from './post'
 import { createStage, type Quality } from './stage'
 import { ThreadMesh } from './threadMesh'
@@ -25,6 +25,8 @@ export interface WorldOptions {
   forceWebGL?: boolean
   /** device-pixel-ratio ceiling */
   maxDpr?: number
+  /** Run the simulation in a Web Worker (the page renders a mirror); else on the main thread. */
+  worker?: boolean
 }
 
 /** s — the tube enters this long before first touch */
@@ -44,7 +46,7 @@ export async function createWorld(o: WorldOptions) {
   const stage = await createStage({ canvas: o.canvas, forceWebGL: o.forceWebGL, quality })
   const { renderer, scene, camera } = stage
   const paperBake = bakePaper(renderer, quality === 'high' ? 4096 : quality === 'medium' ? 3072 : 2048)
-  const pits = bakePits(renderer)
+  const detail = bakeDetail(renderer)
   const post = createPost(renderer, scene, camera, quality)
 
   const maxDpr = Math.min(o.maxDpr ?? 2, window.devicePixelRatio || 1)
@@ -60,13 +62,61 @@ export async function createWorld(o: WorldOptions) {
   let paper!: ReturnType<typeof createPaper>
   const threadMat = new THREE.MeshPhysicalNodeMaterial({ roughness: 0.5, specularIntensity: 0.3, clearcoat: 1, clearcoatRoughness: 0.05, envMap: stage.glossEnv, envMapIntensity: 1 })
 
-  function load(set: StrokeSet, kin: KinematicsParams, phys: PhysicsParams) {
+  // Simulation driver: stepped here, or in a worker whose replies update the local mirror.
+  const worker = o.worker && typeof Worker !== 'undefined' ? new Worker(new URL('../physics/sim.worker.ts', import.meta.url), { type: 'module' }) : null
+  let gen = 0
+  let inFlight = false
+  let target = 0
+  let acc = 0
+  if (worker) {
+    worker.onmessage = (e: MessageEvent<{ gen: number; snap: SimSnapshot; capped: boolean }>) => {
+      if (e.data.gen !== gen) return
+      inFlight = false
+      sim.applySnapshot(e.data.snap)
+      if (e.data.capped) target = sim.t // too far behind: drop the backlog, like the local cap
+    }
+  }
+
+  /** Advance simulated time by dt (s), at most maxSteps steps at once (excess time is dropped). */
+  function advance(dt: number, maxSteps: number) {
+    if (!worker) {
+      acc += dt
+      let n = 0
+      while (acc >= sim.dt && n < maxSteps) {
+        sim.step()
+        acc -= sim.dt
+        n++
+      }
+      if (n >= maxSteps) acc = 0
+      return
+    }
+    target += dt
+    if (!inFlight) {
+      inFlight = true
+      worker.postMessage({ type: 'advance', gen, target, maxSteps })
+    }
+  }
+
+  /** Stop the running simulation (before jumping to a bake); late worker replies are ignored. */
+  function halt() {
+    gen++
+    inFlight = false
+    worker?.postMessage({ type: 'stop' })
+  }
+
+  function load(set: StrokeSet, kin: KinematicsParams, phys: PhysicsParams, local = false) {
     if (paste) {
       scene.remove(paste.group, thread.mesh, paper.mesh)
       paste.dispose()
     }
     sim = new PasteSimulation(set, kin, phys, -INTRO_LEAD)
-    paste = new PasteSurface(sim.field, pits.texture, stage.glossEnv)
+    gen++
+    inFlight = false
+    acc = 0
+    target = sim.t
+    if (worker && !local) worker.postMessage({ type: 'init', gen, set, kin, phys, startTime: -INTRO_LEAD })
+    else if (worker) worker.postMessage({ type: 'stop' })
+    paste = new PasteSurface(sim.field, detail.texture, stage.glossEnv)
     const f = sim.field
     paper = createPaper({ bake: paperBake.texture, occlusion: paste.occlusion, fieldRect: { x0: f.x0, z0: f.z0, w: f.nx * f.dx, d: f.nz * f.dx } })
     thread = new ThreadMesh(sim.thread.n, threadMat)
@@ -142,8 +192,35 @@ export async function createWorld(o: WorldOptions) {
 
   /** Rotate the reflected studio around the vertical: slides the highlights along the letters. */
   function setGlossRotation(y: number) {
-    for (const m of paste.group.children as THREE.Mesh[]) (m.material as THREE.MeshPhysicalNodeMaterial).envMapRotation.y = y
+    ;((paste.group.children[0] as THREE.Mesh).material as THREE.MeshPhysicalNodeMaterial).envMapRotation.y = y
     threadMat.envMapRotation.y = y
+  }
+
+  /**
+   * Compile every pipeline before anything is shown: all paste chunks, the thread, the tube,
+   * shadows and post, so no shader is built mid-intro (each build stalls a frame). Renders one
+   * frame with the post fade at black.
+   */
+  async function warmUp() {
+    const fade = post.uniforms.fade.value
+    const threadOn = thread.mesh.visible
+    const tubeOn = tube.group.visible
+    paste.showAll(true)
+    thread.mesh.visible = true
+    tube.group.visible = true
+    try {
+      await renderer.compileAsync(scene, camera)
+    } catch {
+      /* compileAsync is an optimisation; the render below compiles anyway */
+    }
+    post.uniforms.fade.value = 0
+    stage.key.shadow.needsUpdate = true
+    post.pipeline.render()
+    post.uniforms.fade.value = fade
+    paste.showAll(false)
+    thread.mesh.visible = threadOn
+    tube.group.visible = tubeOn
+    stage.key.shadow.needsUpdate = true
   }
 
   function render() {
@@ -163,8 +240,11 @@ export async function createWorld(o: WorldOptions) {
     post,
     tube,
     load,
+    advance,
+    halt,
     applyBake,
     setGlossRotation,
+    warmUp,
     sync,
     adapt,
     render,

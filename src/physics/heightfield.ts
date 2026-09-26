@@ -9,16 +9,10 @@
  * doesn't cancel it) for the striation normal detail.
  */
 import type { PhysicsParams } from './params'
-import { binghamFluxCoefficient, plasticViscosity } from './rheology'
+import { plasticViscosity } from './rheology'
 
-const TILE = 16
-
-export interface FieldRect {
-  i0: number
-  i1: number
-  k0: number
-  k1: number
-}
+/** cells per tile side: the unit of wetting, relaxation and change tracking */
+export const TILE = 16
 
 export class HeightField {
   readonly nx: number
@@ -40,9 +34,22 @@ export class HeightField {
   private readonly wetUntil: Float32Array
   private readonly roundUntil: Float32Array
   private readonly update: Uint8Array
+  private readonly tileFlags: Uint8Array
+  /**
+   * Exact skipping of locked tiles: a tile whose faces all carried zero flux when last
+   * evaluated, with nothing changed in it or its eight neighbours since, would compute zero
+   * again. `gen` counts events; `changed` / `quietAt` hold the gen of a tile's last height
+   * change / last all-zero evaluation (−1 = not quiet) and `quietFlags` its neighbour flags then.
+   */
+  private gen = 0
+  private readonly changed: Float64Array
+  private readonly quietAt: Float64Array
+  private readonly quietFlags: Uint8Array
   private readonly fx: Float32Array
   private readonly fz: Float32Array
-  private readonly dirty: FieldRect = { i0: Infinity, i1: -Infinity, k0: Infinity, k1: -Infinity }
+  /** Tiles changed since the last take, one set per consumer (texture upload, occlusion). */
+  private readonly dirty: [Uint8Array, Uint8Array]
+  private readonly dirtyList: [number[], number[]] = [[], []]
   private readonly tileList: number[] = []
   private scratchIdx = new Int32Array(4096)
   private scratchW = new Float32Array(4096)
@@ -66,6 +73,11 @@ export class HeightField {
     this.wetUntil = new Float32Array(this.ntx * this.ntz).fill(-1)
     this.roundUntil = new Float32Array(this.ntx * this.ntz).fill(-1)
     this.update = new Uint8Array(this.ntx * this.ntz)
+    this.dirty = [new Uint8Array(this.ntx * this.ntz), new Uint8Array(this.ntx * this.ntz)]
+    this.tileFlags = new Uint8Array(this.ntx * this.ntz)
+    this.changed = new Float64Array(this.ntx * this.ntz)
+    this.quietAt = new Float64Array(this.ntx * this.ntz).fill(-1)
+    this.quietFlags = new Uint8Array(this.ntx * this.ntz)
   }
 
   clear() {
@@ -76,11 +88,13 @@ export class HeightField {
     this.passTravel.fill(0)
     this.wetUntil.fill(-1)
     this.roundUntil.fill(-1)
+    this.changed.fill(++this.gen)
     this.markDirty(0, this.nx, 0, this.nz)
   }
 
   /** Mark the whole field changed (after loading a bake). */
   touchAll() {
+    this.changed.fill(++this.gen)
     this.markDirty(0, this.nx, 0, this.nz)
   }
 
@@ -107,22 +121,79 @@ export class HeightField {
     return v * this.dx * this.dx
   }
 
-  /** Dirty cell rectangle since the last call (for texture uploads), or null. */
-  takeDirty(): FieldRect | null {
-    const d = this.dirty
-    if (d.i1 < d.i0) return null
-    const r = { i0: Math.max(0, d.i0), i1: Math.min(this.nx, d.i1), k0: Math.max(0, d.k0), k1: Math.min(this.nz, d.k1) }
-    d.i0 = d.k0 = Infinity
-    d.i1 = d.k1 = -Infinity
-    return r
+  /** Tiles per row / column (tile id = row · tilesX + column). */
+  get tilesX() {
+    return this.ntx
+  }
+  get tilesZ() {
+    return this.ntz
+  }
+
+  /** Ids of tiles changed since this consumer's last call (0 = surface upload, 1 = occlusion). */
+  takeDirty(consumer: 0 | 1): number[] {
+    const list = this.dirtyList[consumer]
+    const out = list.slice()
+    const flags = this.dirty[consumer]
+    for (const id of list) flags[id] = 0
+    list.length = 0
+    return out
+  }
+
+  /**
+   * Copy tiles out as [h, cos2θ-sum, sin2θ-sum] per cell, TILE² cells per tile in row order
+   * (cells past the field edge are zero). Used to mirror a worker's field on the main thread.
+   */
+  readTiles(ids: ArrayLike<number>): Float32Array {
+    const out = new Float32Array(ids.length * TILE * TILE * 3)
+    let o = 0
+    for (let n = 0; n < ids.length; n++) {
+      const t = ids[n] % this.ntx
+      const s = (ids[n] / this.ntx) | 0
+      for (let k = s * TILE; k < s * TILE + TILE; k++)
+        for (let i = t * TILE; i < t * TILE + TILE; i++, o += 3) {
+          if (i >= this.nx || k >= this.nz) continue
+          const id = k * this.nx + i
+          out[o] = this.h[id]
+          out[o + 1] = this.dirC[id]
+          out[o + 2] = this.dirS[id]
+        }
+    }
+    return out
+  }
+
+  /** Write tiles produced by readTiles() and mark them changed. */
+  writeTiles(ids: ArrayLike<number>, cells: Float32Array) {
+    let o = 0
+    for (let n = 0; n < ids.length; n++) {
+      const t = ids[n] % this.ntx
+      const s = (ids[n] / this.ntx) | 0
+      for (let k = s * TILE; k < s * TILE + TILE; k++)
+        for (let i = t * TILE; i < t * TILE + TILE; i++, o += 3) {
+          if (i >= this.nx || k >= this.nz) continue
+          const id = k * this.nx + i
+          this.h[id] = cells[o]
+          this.dirC[id] = cells[o + 1]
+          this.dirS[id] = cells[o + 2]
+        }
+      this.markTile(ids[n])
+    }
   }
 
   private markDirty(i0: number, i1: number, k0: number, k1: number) {
-    const d = this.dirty
-    d.i0 = Math.min(d.i0, i0)
-    d.i1 = Math.max(d.i1, i1)
-    d.k0 = Math.min(d.k0, k0)
-    d.k1 = Math.max(d.k1, k1)
+    const t0 = Math.max(0, (i0 / TILE) | 0)
+    const t1 = Math.min(this.ntx - 1, ((i1 - 1) / TILE) | 0)
+    const s0 = Math.max(0, (k0 / TILE) | 0)
+    const s1 = Math.min(this.ntz - 1, ((k1 - 1) / TILE) | 0)
+    for (let s = s0; s <= s1; s++)
+      for (let t = t0; t <= t1; t++) this.markTile(s * this.ntx + t)
+  }
+
+  private markTile(id: number) {
+    for (let c = 0; c < 2; c++)
+      if (!this.dirty[c][id]) {
+        this.dirty[c][id] = 1
+        this.dirtyList[c].push(id)
+      }
   }
 
   private wet(i0: number, i1: number, k0: number, k1: number, now: number, p: PhysicsParams) {
@@ -130,9 +201,11 @@ export class HeightField {
     const t1 = Math.min(this.ntx - 1, Math.floor((i1 - 1) / TILE))
     const s0 = Math.max(0, Math.floor(k0 / TILE))
     const s1 = Math.min(this.ntz - 1, Math.floor((k1 - 1) / TILE))
+    const g = ++this.gen
     for (let s = s0; s <= s1; s++)
       for (let t = t0; t <= t1; t++) {
         const id = s * this.ntx + t
+        this.changed[id] = g
         this.wetUntil[id] = Math.max(this.wetUntil[id], now + p.settleTime)
         this.roundUntil[id] = Math.max(this.roundUntil[id], now + p.edgeRoundingTime)
       }
@@ -242,6 +315,25 @@ export class HeightField {
     return false
   }
 
+  /** A tile left all-zero at its last evaluation, with no height change in its 3×3 block since. */
+  private isQuiet(tid: number, ti: number, tk: number): boolean {
+    const q = this.quietAt[tid]
+    if (q < 0 || this.quietFlags[tid] !== this.tileFlags[tid]) return false
+    const ntx = this.ntx
+    const t = (ti / TILE) | 0
+    const s = (tk / TILE) | 0
+    for (let ds = -1; ds <= 1; ds++) {
+      const ss = s + ds
+      if (ss < 0 || ss >= this.ntz) continue
+      for (let dt = -1; dt <= 1; dt++) {
+        const tt = t + dt
+        if (tt < 0 || tt >= ntx) continue
+        if (this.changed[ss * ntx + tt] >= q) return false
+      }
+    }
+    return true
+  }
+
   /**
    * Viscoplastic relaxation of wet tiles over dt:
    *   ∂h/∂t + ∇·q = 0,  q = −(c_Bingham + D_round) ∇h
@@ -271,54 +363,97 @@ export class HeightField {
     if (tiles.length === 0) return
 
     const rg = p.density * p.gravity
-    const mu = plasticViscosity(p)
-    const tileOf = (i: number, k: number) => ((k / TILE) | 0) * ntx + ((i / TILE) | 0)
+    // Bingham coefficient c = ρg·Y²(3h − Y)/(6μ) with Y = h − τ_y/(ρg|∇h|): the layer is locked
+    // (c = 0) unless |∇h| > τ_y/(ρg·h). Most wet paste is locked, so testing that on |∇h|² first
+    // skips the square root for most cells.
+    const lock = p.yieldStress / rg
+    const cK = rg / (6 * plasticViscosity(p))
+    // Per-tile neighbour flags, fixed for this call: bit 0 right tile updates, bit 1 lower tile
+    // updates, bit 2 left tile updates, bit 3 upper tile updates.
+    const flags = this.tileFlags
+    for (const tid of tiles) {
+      const ti = (tid % ntx) * TILE
+      const tk = ((tid / ntx) | 0) * TILE
+      flags[tid] =
+        (ti + TILE < nx && update[tid + 1] === 1 ? 1 : 0) |
+        (tk + TILE < nz && update[tid + ntx] === 1 ? 2 : 0) |
+        (ti > 0 && update[tid - 1] === 1 ? 4 : 0) |
+        (tk > 0 && update[tid - ntx] === 1 ? 8 : 0)
+    }
 
     let remaining = dt
     for (let pass = 0; pass < p.maxRelaxSubsteps && remaining > 1e-9; pass++) {
       let dmax = 0
+      const g = ++this.gen
       for (const tid of tiles) {
         const round = this.roundUntil[tid] > now ? p.edgeRounding : 0
         const ti = (tid % ntx) * TILE
         const tk = ((tid / ntx) | 0) * TILE
+        if (round === 0 && this.isQuiet(tid, ti, tk)) continue
+        let anyFlux = false
         const iEnd = Math.min(nx, ti + TILE)
         const kEnd = Math.min(nz, tk + TILE)
-        const rightOk = ti + TILE < nx && update[tid + 1] === 1
-        const downOk = tk + TILE < nz && update[tid + ntx] === 1
+        // Faces on the tile's right/lower edge carry flux only if that neighbour updates too.
+        const iLast = flags[tid] & 1 ? iEnd : iEnd - 1
+        const kLast = flags[tid] & 2 ? kEnd : kEnd - 1
         for (let k = tk; k < kEnd; k++) {
           const up = k > 0 ? k - 1 : k
           const dn = k < nz - 1 ? k + 1 : k
+          const row = k * nx
+          const rowUp = up * nx
+          const rowDn = dn * nx
+          const zSpan = 2 * (dn - up) * dx
           for (let i = ti; i < iEnd; i++) {
-            const id = k * nx + i
+            const id = row + i
             const hc = h[id]
             let f = 0
-            if (i + 1 < iEnd || (i + 1 === iEnd && rightOk)) {
+            if (i < iLast) {
               const hr = h[id + 1]
               if (hc > 0 || hr > 0) {
                 const gx = (hr - hc) / dx
-                const gz = (h[dn * nx + i] + h[dn * nx + i + 1] - h[up * nx + i] - h[up * nx + i + 1]) / (2 * (dn - up) * dx)
-                const c = binghamFluxCoefficient(hc > hr ? hc : hr, Math.hypot(gx, gz), rg, p.yieldStress, mu) + (hc > 0 && hr > 0 ? round : 0.35 * round)
+                const gz = (h[rowDn + i] + h[rowDn + i + 1] - h[rowUp + i] - h[rowUp + i + 1]) / zSpan
+                const hm = hc > hr ? hc : hr
+                const s2 = gx * gx + gz * gz
+                const t = lock / hm
+                let c = hc > 0 && hr > 0 ? round : 0.35 * round
+                if (s2 > t * t) {
+                  const Y = hm - lock / Math.sqrt(s2)
+                  if (Y > 0) c += cK * Y * Y * (3 * hm - Y)
+                }
                 f = -c * gx
+                if (c > 0) anyFlux = true
                 if (c > dmax) dmax = c
               }
             }
             fx[id] = f
             f = 0
-            if (k + 1 < kEnd || (k + 1 === kEnd && downOk)) {
+            if (k < kLast) {
               const hd = h[id + nx]
               if (hc > 0 || hd > 0) {
                 const gz = (hd - hc) / dx
                 const l = i > 0 ? i - 1 : i
                 const r = i < nx - 1 ? i + 1 : i
-                const gx = (h[k * nx + r] + h[(k + 1) * nx + r] - h[k * nx + l] - h[(k + 1) * nx + l]) / (2 * (r - l) * dx)
-                const c = binghamFluxCoefficient(hc > hd ? hc : hd, Math.hypot(gx, gz), rg, p.yieldStress, mu) + (hc > 0 && hd > 0 ? round : 0.35 * round)
+                const gx = (h[row + r] + h[row + nx + r] - h[row + l] - h[row + nx + l]) / (2 * (r - l) * dx)
+                const hm = hc > hd ? hc : hd
+                const s2 = gx * gx + gz * gz
+                const t = lock / hm
+                let c = hc > 0 && hd > 0 ? round : 0.35 * round
+                if (s2 > t * t) {
+                  const Y = hm - lock / Math.sqrt(s2)
+                  if (Y > 0) c += cK * Y * Y * (3 * hm - Y)
+                }
                 f = -c * gz
+                if (c > 0) anyFlux = true
                 if (c > dmax) dmax = c
               }
             }
             fz[id] = f
           }
         }
+        if (!anyFlux && round === 0) {
+          this.quietAt[tid] = g
+          this.quietFlags[tid] = flags[tid]
+        } else this.quietAt[tid] = -1
       }
       if (dmax <= 0) break
       // CFL-limited substep. When the budget runs out the remaining time is dropped, which
@@ -327,20 +462,30 @@ export class HeightField {
       remaining -= sub
       const lim = (0.2 * dx) / sub
       const a = sub / dx
+      // Positivity limiter: a face never drains more than its upwind cell holds.
       for (const tid of tiles) {
         const ti = (tid % ntx) * TILE
         const tk = ((tid / ntx) | 0) * TILE
         const iEnd = Math.min(nx, ti + TILE)
         const kEnd = Math.min(nz, tk + TILE)
         for (let k = tk; k < kEnd; k++)
-          for (let i = ti; i < iEnd; i++) {
-            const id = k * nx + i
-            let f = fx[id]
-            if (f > 0) fx[id] = Math.min(f, h[id] * lim)
-            else if (f < 0) fx[id] = Math.max(f, -h[id + 1] * lim)
-            f = fz[id]
-            if (f > 0) fz[id] = Math.min(f, h[id] * lim)
-            else if (f < 0) fz[id] = Math.max(f, -h[id + nx] * lim)
+          for (let id = k * nx + ti, e = k * nx + iEnd; id < e; id++) {
+            const gx = fx[id]
+            if (gx > 0) {
+              const m = h[id] * lim
+              if (gx > m) fx[id] = m
+            } else if (gx < 0) {
+              const m = -h[id + 1] * lim
+              if (gx < m) fx[id] = m
+            }
+            const gz = fz[id]
+            if (gz > 0) {
+              const m = h[id] * lim
+              if (gz > m) fz[id] = m
+            } else if (gz < 0) {
+              const m = -h[id + nx] * lim
+              if (gz < m) fz[id] = m
+            }
           }
       }
       for (const tid of tiles) {
@@ -348,16 +493,27 @@ export class HeightField {
         const tk = ((tid / ntx) | 0) * TILE
         const iEnd = Math.min(nx, ti + TILE)
         const kEnd = Math.min(nz, tk + TILE)
-        for (let k = tk; k < kEnd; k++)
+        // Faces owned by a neighbour tile outside the update set carry no flux.
+        const leftIn = (flags[tid] & 4) !== 0
+        const upIn = (flags[tid] & 8) !== 0
+        let changed = false
+        for (let k = tk; k < kEnd; k++) {
+          const zIn = k > tk || upIn
           for (let i = ti; i < iEnd; i++) {
             const id = k * nx + i
-            // Faces owned by a neighbour tile outside the update set carry no flux.
-            const inX = i > 0 && update[tileOf(i - 1, k)] === 1 ? fx[id - 1] : 0
-            const inZ = k > 0 && update[tileOf(i, k - 1)] === 1 ? fz[id - nx] : 0
-            const v = h[id] - a * (fx[id] - inX + fz[id] - inZ)
+            const inX = i > ti || leftIn ? fx[id - 1] : 0
+            const inZ = zIn ? fz[id - nx] : 0
+            const div = fx[id] - inX + fz[id] - inZ
+            if (div === 0) continue
+            const v = h[id] - a * div
             h[id] = v > 0 ? v : 0
+            changed = true
           }
-        this.markDirty(ti, iEnd, tk, kEnd)
+        }
+        if (changed) {
+          this.changed[tid] = g
+          this.markTile(tid)
+        }
       }
     }
   }

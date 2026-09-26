@@ -103,7 +103,7 @@ export async function createStage(o: StageOptions) {
   const key = new THREE.DirectionalLight('#fff3e6', 2.6)
   key.position.copy(KEY_DIR).multiplyScalar(0.6)
   key.castShadow = true
-  const sm = o.quality === 'high' ? 2048 : 1024
+  const sm = o.quality === 'low' ? 512 : 1024
   key.shadow.mapSize.set(sm, sm)
   const sc = key.shadow.camera as THREE.OrthographicCamera
   sc.left = -0.27
