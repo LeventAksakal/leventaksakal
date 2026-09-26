@@ -8,96 +8,107 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/site.webmanifest" />
     <title>Levent Aksakal</title>
-    <meta name="description" content="Levent Aksakal, software engineer in Bursa, Türkiye: systems from the database to the browser, and low-latency media over QUIC." />
-    <meta name="theme-color" content="#0e0f11" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Geist+Mono:wght@400&display=swap"
-    />
+    <meta name="description" content="Levent Aksakal, software engineer in Bursa, Türkiye. Whole systems, from the database to the browser, and low-latency media over QUIC." />
+    <meta name="theme-color" content="#131417" />
     <link rel="stylesheet" href="/src/site/site.css" />
     <script>document.documentElement.classList.add('js')</script>
   </head>
   <body class="is-intro">
+    <a class="skip-link" id="skip-link" href="#main">Skip intro</a>
     <canvas id="scene" aria-hidden="true"></canvas>
     <img id="fallback-name" alt="" hidden />
-
     <a id="home" href="/" aria-label="Levent Aksakal, home"><span class="sr-only">Levent Aksakal</span></a>
-    <button id="skip" type="button">Skip intro</button>
+    <p id="hint" aria-hidden="true"></p>
 
-    <main id="content">
+    <svg class="defs" aria-hidden="true" focusable="false">
+      <defs>
+        <linearGradient id="paint" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="oklch(0.86 0.16 85)" />
+          <stop offset="1" stop-color="oklch(0.66 0.16 62)" />
+        </linearGradient>
+        <symbol id="stroke" viewBox="0 0 300 14" preserveAspectRatio="none">
+          <path fill="none" stroke="url(#paint)" stroke-width="0.085em" stroke-linecap="round" vector-effect="non-scaling-stroke" d="M4 8.5 C 48 5.5, 96 10.5, 150 7.8 S 246 5.2, 296 7.5" />
+          <path fill="none" stroke="#fffbe9" stroke-opacity="0.8" stroke-width="0.018em" stroke-linecap="round" vector-effect="non-scaling-stroke" d="M8 7 C 50 4.4, 96 9.2, 150 6.6 S 244 4.2, 290 6.2" />
+        </symbol>
+      </defs>
+    </svg>
+
+    <main id="main" tabindex="-1">
       <div class="col">
-      <section class="intro" aria-label="About">
-        <p class="lede">
-          I’m a software engineer in Bursa, Türkiye. I like building whole systems, from the database and the server
-          to the browser, and lately I work on low-latency live media over QUIC.
-        </p>
-      </section>
+        <section class="desk" aria-label="Introduction">
+          <h1 class="statement">
+            <span class="line">Software engineer.</span>
+            <span class="line">Whole systems, from</span>
+            <span class="line">the database to the browser.</span>
+          </h1>
+          <aside class="label" aria-label="About the name above">
+            <p class="label-title">Levent Aksakal, <i>signature</i></p>
+            <p>2026. Cadmium yellow oil paste on charcoal paper.</p>
+            <p>400 × 46 mm · 8.3 ml · yield stress 90 Pa</p>
+            <p class="label-note">Written by a simulation each time you arrive.</p>
+          </aside>
+          <a class="cue" href="#work">Work</a>
+        </section>
 
-      <section class="block" aria-labelledby="work-h">
-        <h2 id="work-h">Work</h2>
-        <ul class="projects">
-          <li>
-            <div class="row"><h3>MOQtail</h3><span class="meta">active</span></div>
-            <p>
-              An open-source Media over QUIC library that tracks the latest MoQ draft, in TypeScript and Rust. I’m one of
-              its main contributors.
-            </p>
-            <p class="links"><a href="https://moqtail.dev">moqtail.dev</a><a href="https://github.com/kixelated/moqtail">source</a></p>
-          </li>
-          <li>
-            <div class="row"><h3>Kampüs</h3><span class="meta">specification</span></div>
-            <p>
-              An open-source platform for university life in Türkiye: schedules, meals, announcements and events, plus a
-              community layer for verified students. Built for students, by students.
-            </p>
-          </li>
-          <li>
-            <div class="row"><h3>Cut’n Dolls</h3><span class="meta">pre-production</span></div>
-            <p>
-              A multiplayer physics party game in Unreal Engine 5, made with a team of three. Run a market stall by day,
-              fight the other shopkeepers by night.
-            </p>
-          </li>
-          <li>
-            <div class="row"><h3>Kind cluster load testing</h3><span class="meta">2024</span></div>
-            <p>
-              A Kubernetes test bench: Kind clusters, k6 load tests, Prometheus and Grafana, with scripts that stand the
-              whole thing up.
-            </p>
-            <p class="links"><a href="https://github.com/LeventAksakal/kind-cluster-k6">source</a></p>
-          </li>
-          <li>
-            <div class="row"><h3>This site</h3><span class="meta">2026</span></div>
-            <p>
-              The name at the top is written by a simulation: a yield-stress paint leaves a nozzle as a viscous thread,
-              lands on the paper and settles until its yield stress holds it.
-            </p>
-            <p class="links"><a href="https://github.com/LeventAksakal/leventaksakal">source</a></p>
-          </li>
-        </ul>
-      </section>
+        <section class="work" id="work" aria-labelledby="work-h">
+          <h2 id="work-h" class="kicker">Selected work</h2>
+          <ol class="index" role="list">
+            <li class="entry reveal">
+              <h3 class="title"><a href="https://moqtail.dev">MOQtail<svg class="underline" aria-hidden="true"><use href="#stroke" /></svg></a></h3>
+              <p class="meta">Open source · 2024 to now</p>
+              <p class="desc">A Media over QUIC library that tracks the latest MoQ draft, written in TypeScript and Rust for live streaming at very low latency. I’m one of its main contributors.</p>
+              <p class="links"><a href="https://moqtail.dev">moqtail.dev</a><a href="https://github.com/kixelated/moqtail">Source</a></p>
+            </li>
+            <li class="entry reveal">
+              <h3 class="title"><span tabindex="0">Kampüs<svg class="underline" aria-hidden="true"><use href="#stroke" /></svg></span></h3>
+              <p class="meta">Product specification</p>
+              <p class="desc">An open-source platform for university life in Türkiye: schedules, meals, announcements and events, with a community layer for verified students. Built for students, by students.</p>
+            </li>
+            <li class="entry reveal">
+              <h3 class="title"><span tabindex="0">Cut’n Dolls<svg class="underline" aria-hidden="true"><use href="#stroke" /></svg></span></h3>
+              <p class="meta">Game · pre-production</p>
+              <p class="desc">A multiplayer physics party game in Unreal Engine 5, with a team of three. Run a market stall by day and fight the other shopkeepers by night.</p>
+            </li>
+            <li class="entry reveal">
+              <h3 class="title"><a href="https://github.com/LeventAksakal/kind-cluster-k6">Load testing bench<svg class="underline" aria-hidden="true"><use href="#stroke" /></svg></a></h3>
+              <p class="meta">Kubernetes · 2024</p>
+              <p class="desc">Kind clusters, k6 load tests, Prometheus and Grafana, with scripts that stand the whole thing up for stress-testing services.</p>
+              <p class="links"><a href="https://github.com/LeventAksakal/kind-cluster-k6">Source</a></p>
+            </li>
+            <li class="entry reveal">
+              <h3 class="title"><a href="https://github.com/LeventAksakal/leventaksakal">This site<svg class="underline" aria-hidden="true"><use href="#stroke" /></svg></a></h3>
+              <p class="meta">WebGPU · 2026</p>
+              <p class="desc">The name at the top is simulated paint: a yield-stress paste leaves the nozzle as a viscous thread, lands, and settles until its yield stress holds it. Deterministic, 240 steps a second.</p>
+              <p class="links"><a href="https://github.com/LeventAksakal/leventaksakal">Source</a></p>
+            </li>
+          </ol>
+        </section>
 
-      <section class="block" aria-labelledby="facts-h">
-        <h2 id="facts-h">Facts</h2>
-        <ul class="facts">
-          <li>Computer engineering graduate of Özyeğin University.</li>
-          <li>
-            Interned at Constructor Technology, on a WebSocket server with Redis for video conferencing, and at TÜBİTAK
-            SAGE, on mobile test automation and Android kernel drivers.
-          </li>
-          <li>Mostly TypeScript, Rust and Vue, and whatever the problem needs.</li>
-          <li>Off the keyboard: mountaineering, rock climbing, skiing, guitar, and desserts.</li>
-        </ul>
-      </section>
+        <section class="about" aria-labelledby="about-h">
+          <h2 id="about-h" class="kicker">About</h2>
+          <p class="about-text reveal">
+            I work from Bursa, mostly in TypeScript and Rust. I like understanding how things work at every layer, and
+            building the whole thing rather than a slice of it.
+          </p>
+          <dl class="facts reveal">
+            <div><dt>Studied</dt><dd>Computer Engineering, Özyeğin University</dd></div>
+            <div><dt>Interned</dt><dd>Constructor Technology: WebSocket and Redis for video calls. TÜBİTAK SAGE: mobile test automation, Android kernel drivers.</dd></div>
+            <div><dt>Works in</dt><dd>TypeScript, Rust, Vue, and what the problem needs</dd></div>
+            <div><dt>Away from it</dt><dd>Mountains and rock, skiing, guitar, desserts</dd></div>
+          </dl>
+        </section>
 
-      <section class="block" aria-labelledby="contact-h">
-        <h2 id="contact-h">Contact</h2>
-        <p class="contact"><a href="https://github.com/LeventAksakal">github.com/LeventAksakal</a></p>
-      </section>
+        <section class="contact" aria-labelledby="contact-h">
+          <h2 id="contact-h" class="kicker">Contact</h2>
+          <p class="reach reveal">
+            <a href="https://github.com/LeventAksakal">github.com/<wbr />LeventAksakal<svg class="underline" aria-hidden="true"><use href="#stroke" /></svg></a>
+          </p>
+        </section>
 
-      <footer class="foot">© 2026 Zafer Levent Aksakal</footer>
+        <footer class="colophon">
+          <p>Set in Bricolage Grotesque and Geist Mono. The paint is a Herschel–Bulkley paste on a viscoplastic height field, drawn with three.js.</p>
+          <p>© 2026 Zafer Levent Aksakal</p>
+        </footer>
       </div>
     </main>
 

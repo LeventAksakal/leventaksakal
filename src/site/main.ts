@@ -2,33 +2,39 @@
  * Home page orchestration.
  *
  *  intro       paper fades up, the tube writes the name (simulation in real time)
- *  transition  camera and name glide so the name lands top-centre at nav size; the paper
- *              dims, the content fades in (one reveal)
- *  final       static scene, rendered on demand (resize, hover light sweep)
+ *  transition  camera and name glide so the name lands top-centre at nav size; the desk
+ *              statement and label rise in (one reveal)
+ *  final       static scene, rendered on demand: resize, scroll (the paper dims and the
+ *              studio highlight slides along the name), hover on the name
  *
- * Skipping (button, any key, click, scroll, touch), repeat visits and reduced motion all go
- * straight to the final state using the baked height field. Clicking the name at home
- * replays the intro. The canvas is decoration; the link over the name is the interface.
+ * During the intro a click or tap fast-forwards; a second one skips to the end (so does
+ * Escape, scrolling, or the keyboard skip link). Skips, repeat visits and reduced motion use
+ * the baked height field. Clicking the name at home replays the intro.
  */
 import { gsap } from 'gsap'
+import * as THREE from 'three/webgpu'
+import bakeUrl from '../assets/bake/nycd.bin.gz?url'
 import nycd from '../lettering/NothingYouCouldDo.strokes.json'
 import type { StrokeSet } from '../lettering/types'
 import { presetKey, siteKinematics, sitePhysics } from '../physics/preset'
 import type { CameraPose } from '../scene/stage'
 import { createWorld, type World } from '../scene/world'
-import bakeUrl from '../assets/bake/nycd.bin.gz?url'
-import * as THREE from 'three/webgpu'
 
 const SEEN_KEY = 'site.intro-seen.v1'
+const FAST = 5 // fast-forward rate
 const set = nycd as StrokeSet
 const key = presetKey(siteKinematics, sitePhysics, 'nycd')
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches
+const params = new URLSearchParams(location.search)
 
 const body = document.body
 const canvas = document.querySelector<HTMLCanvasElement>('#scene')!
 const home = document.querySelector<HTMLAnchorElement>('#home')!
-const skipBtn = document.querySelector<HTMLButtonElement>('#skip')!
-const content = document.querySelector<HTMLElement>('#content')!
+const hint = document.querySelector<HTMLParagraphElement>('#hint')!
+const skipLink = document.querySelector<HTMLAnchorElement>('#skip-link')!
+const main = document.querySelector<HTMLElement>('#main')!
+const lines = [...document.querySelectorAll<HTMLElement>('.statement .line')]
+const deskExtras = [...document.querySelectorAll<HTMLElement>('.desk .label, .desk .cue')]
 
 const store = {
   get: (k: string) => {
@@ -72,19 +78,11 @@ const pose: CameraPose = { ...introPose, target: introPose.target.clone() }
 function navPose(): CameraPose {
   const W = innerWidth
   const H = innerHeight
-  const navW = Math.min(380, Math.max(200, W * 0.3))
+  const navW = Math.min(360, Math.max(190, W * 0.28))
   const pitch = 16
   const nameH = navW * (48 / 400) * Math.cos(THREE.MathUtils.degToRad(pitch))
-  const top = 24
-  return {
-    pitch,
-    yaw: 0,
-    roll: 0,
-    fov: 24,
-    frameWidth: (0.41 * W) / navW,
-    target: new THREE.Vector3(0, 0, 0),
-    screenY: (top + nameH / 2) / H,
-  }
+  const top = 26
+  return { pitch, yaw: 0, roll: 0, fov: 24, frameWidth: (0.41 * W) / navW, target: new THREE.Vector3(0, 0, 0), screenY: (top + nameH / 2) / H }
 }
 
 function blendPose(a: CameraPose, b: CameraPose, t: number) {
@@ -118,14 +116,15 @@ function placeLink() {
     y0 = Math.min(y0, y)
     y1 = Math.max(y1, y)
   }
-  Object.assign(home.style, { left: `${x0 - 8}px`, top: `${y0 - 6}px`, width: `${x1 - x0 + 16}px`, height: `${y1 - y0 + 12}px`, transform: 'none' })
-  document.documentElement.style.setProperty('--nav-h', `${Math.round(y1 + 18)}px`)
+  Object.assign(home.style, { left: `${x0 - 10}px`, top: `${y0 - 8}px`, width: `${x1 - x0 + 20}px`, height: `${y1 - y0 + 16}px`, translate: 'none' })
+  document.documentElement.style.setProperty('--nav-h', `${Math.round(y1 + 22)}px`)
 }
 
 // ---------------------------------------------------------------- loop
 let needsRender = true
 let last = performance.now()
 let acc = 0
+let rate = 1
 const requestRender = () => {
   needsRender = true
 }
@@ -135,15 +134,16 @@ function frame(now: number) {
   last = now
   if (phase === 'intro') {
     const sim = world.sim
-    acc += dt
+    acc += dt * rate
     let n = 0
-    while (acc >= sim.dt && n < 48) {
+    const cap = 48 * rate
+    while (acc >= sim.dt && n < cap) {
       sim.step()
       acc -= sim.dt
       n++
     }
-    if (n === 48) acc = 0
-    world.sync(dt)
+    if (n >= cap) acc = 0
+    world.sync(dt * rate)
     if (sim.t >= sim.endTime) beginTransition()
     needsRender = true
     world.adapt(dt * 1000)
@@ -158,35 +158,63 @@ function frame(now: number) {
   requestAnimationFrame(frame)
 }
 
+// ---------------------------------------------------------------- scroll ↔ scene
+const desk = { dim: 0.22 } // paper dimming on the first screen
+function applyScroll() {
+  const h = Math.max(1, main.clientHeight)
+  const p = Math.min(1, main.scrollTop / (h * 0.8))
+  world.paper.uniforms.dim.value = desk.dim + (0.9 - desk.dim) * p
+  world.setGlossRotation(gloss.y + main.scrollTop * 0.0007)
+  requestRender()
+}
+main.addEventListener('scroll', () => phase === 'final' && applyScroll(), { passive: true })
+
 // ---------------------------------------------------------------- phases
 const look = { mix: 0 }
+let hintTimer = 0
+
+function setHint(text: string) {
+  hint.textContent = text
+  hint.classList.toggle('is-on', !!text)
+}
 
 function startIntro() {
   phase = 'intro'
+  rate = 1
   body.classList.add('is-intro')
-  skipBtn.hidden = false
-  gsap.killTweensOf([look, world.post.uniforms.fade, content])
+  gsap.killTweensOf([look, world.post.uniforms.fade, main, ...lines, ...deskExtras])
   look.mix = 0
   blendPose(introPose, navPose(), 0)
   world.paper.uniforms.dim.value = 0
   world.post.uniforms.tiltShift.value = 1
   world.post.uniforms.fade.value = 0
   gsap.to(world.post.uniforms.fade, { value: 1, duration: 0.8, ease: 'power1.out' })
-  gsap.set(content, { autoAlpha: 0, y: 14 })
+  main.scrollTop = 0
+  gsap.set(main, { autoAlpha: 0 })
+  setHint('')
+  clearTimeout(hintTimer)
+  hintTimer = window.setTimeout(() => phase === 'intro' && setHint('Click to fast-forward'), 1600)
   acc = 0
-  addSkipListeners()
+  addIntroListeners()
 }
 
 function beginTransition() {
   if (phase !== 'intro') return
   phase = 'transition'
-  removeSkipListeners()
+  rate = 1
+  removeIntroListeners()
+  setHint('')
   const tl = gsap.timeline({ onComplete: finish })
-  tl.to(look, { mix: 1, duration: 1.6, ease: 'power2.inOut', onUpdate: () => blendPose(introPose, navPose(), look.mix) }, 0)
-  tl.to(world.paper.uniforms.dim, { value: 1, duration: 1.4, ease: 'power1.inOut' }, 0.1)
+  tl.to(look, { mix: 1, duration: 1.7, ease: 'power2.inOut', onUpdate: () => blendPose(introPose, navPose(), look.mix) }, 0)
+  tl.to(world.paper.uniforms.dim, { value: desk.dim, duration: 1.4, ease: 'power1.inOut' }, 0.2)
   tl.to(world.post.uniforms.tiltShift, { value: 0, duration: 1.2, ease: 'power1.inOut' }, 0)
-  tl.add(() => body.classList.remove('is-intro'), 0.9)
-  tl.to(content, { autoAlpha: 1, y: 0, duration: 0.8, ease: 'power2.out' }, 0.95)
+  tl.add(() => {
+    body.classList.remove('is-intro')
+    placeLink()
+    gsap.set(main, { autoAlpha: 1 })
+  }, 1.1)
+  tl.fromTo(lines, { autoAlpha: 0, y: 42 }, { autoAlpha: 1, y: 0, duration: 0.9, stagger: 0.09, ease: 'power3.out' }, 1.15)
+  tl.fromTo(deskExtras, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.8, stagger: 0.12, ease: 'power1.out' }, 1.6)
 }
 
 function finish() {
@@ -195,71 +223,93 @@ function finish() {
   store.set(SEEN_KEY, '1')
   blendPose(introPose, navPose(), 1)
   placeLink()
-  requestRender()
+  applyScroll()
 }
 
 /** Jump to the settled final state (skip, repeat visit, reduced motion). */
 async function goFinal(fadeIn: boolean) {
-  removeSkipListeners()
+  removeIntroListeners()
   phase = 'transition'
-  gsap.killTweensOf([look, world.post.uniforms.fade, world.paper.uniforms.dim, world.post.uniforms.tiltShift, content])
+  rate = 1
+  setHint('')
+  gsap.killTweensOf([look, world.post.uniforms.fade, world.paper.uniforms.dim, world.post.uniforms.tiltShift, main, ...lines, ...deskExtras])
   const bytes = await bakeBytes
   const ok = bytes ? await world.applyBake(bytes, key) : false
   if (!ok) world.sim.advanceTo(world.sim.endTime) // no bake: simulate (slower, same result)
   world.sync(0)
   look.mix = 1
-  world.paper.uniforms.dim.value = 1
   world.post.uniforms.tiltShift.value = 0
+  body.classList.remove('is-intro')
+  gsap.set(main, { autoAlpha: 1 })
+  gsap.set([...lines, ...deskExtras], { autoAlpha: 1, y: 0 })
   finish()
-  gsap.set(content, { autoAlpha: 1, y: 0 })
   if (fadeIn && !reduceMotion) {
     world.post.uniforms.fade.value = 0
-    gsap.to(world.post.uniforms.fade, { value: 1, duration: 0.35, ease: 'power1.out', onUpdate: requestRender })
-    gsap.from(content, { autoAlpha: 0, duration: 0.35 })
+    gsap.to(world.post.uniforms.fade, { value: 1, duration: 0.45, ease: 'power1.out', onUpdate: requestRender })
+    gsap.from(lines, { autoAlpha: 0, y: 30, duration: 0.7, stagger: 0.07, ease: 'power3.out' })
+    gsap.from(deskExtras, { autoAlpha: 0, duration: 0.6, delay: 0.25 })
   } else {
     world.post.uniforms.fade.value = 1
   }
   requestRender()
 }
 
-// ---------------------------------------------------------------- input
-const skip = (e?: Event) => {
+// ---------------------------------------------------------------- intro input
+/** First click/tap/key: fast-forward. Second: skip to the end. */
+function advance() {
   if (phase !== 'intro') return
-  if (e instanceof KeyboardEvent && (e.key === 'Tab' || e.key === 'Shift')) return // let people reach the button
-  void goFinal(true)
+  if (rate === 1) {
+    rate = FAST
+    setHint(`×${FAST} · click again to skip`)
+  } else {
+    void goFinal(true)
+  }
 }
-const skipEvents: [EventTarget, string][] = [
-  [skipBtn, 'click'],
-  [window, 'keydown'],
-  [window, 'wheel'],
-  [window, 'touchstart'],
-  [canvas, 'pointerdown'],
-]
-function addSkipListeners() {
-  for (const [t, ev] of skipEvents) t.addEventListener(ev, skip, { passive: true })
+const onPointer = (e: PointerEvent) => {
+  if (e.button === 0) advance()
 }
-function removeSkipListeners() {
-  for (const [t, ev] of skipEvents) t.removeEventListener(ev, skip)
+const onKey = (e: KeyboardEvent) => {
+  if (e.key === 'Escape') void goFinal(true)
+  else if (e.key === ' ' || e.key === 'Enter' || e.key === 'ArrowRight') {
+    if (document.activeElement === skipLink) return
+    e.preventDefault()
+    advance()
+  }
+}
+const onWheel = () => void goFinal(true)
+const onSkipLink = (e: Event) => {
+  e.preventDefault()
+  void goFinal(false).then(() => main.focus())
+}
+function addIntroListeners() {
+  window.addEventListener('pointerdown', onPointer)
+  window.addEventListener('keydown', onKey)
+  window.addEventListener('wheel', onWheel, { passive: true })
+  skipLink.addEventListener('click', onSkipLink)
+}
+function removeIntroListeners() {
+  window.removeEventListener('pointerdown', onPointer)
+  window.removeEventListener('keydown', onKey)
+  window.removeEventListener('wheel', onWheel)
+  skipLink.removeEventListener('click', onSkipLink)
 }
 
+// ---------------------------------------------------------------- the name
 home.addEventListener('click', (e) => {
-  // At home, the name replays the intro instead of reloading the page.
-  // (This is the only page for now; on other pages the link simply navigates home.)
-  {
-    e.preventDefault()
-    if (phase !== 'final') return
-    gsap.to(content, {
-      autoAlpha: 0,
-      duration: 0.3,
-      onComplete: () => {
-        world.load(set, siteKinematics, sitePhysics)
-        startIntro()
-      },
-    })
-  }
+  // This is the only page for now: at home the name replays the intro.
+  e.preventDefault()
+  if (phase !== 'final') return
+  gsap.to(main, {
+    autoAlpha: 0,
+    duration: 0.3,
+    onComplete: () => {
+      world.load(set, siteKinematics, sitePhysics)
+      startIntro()
+    },
+  })
 })
 
-// Hover / focus: the key highlight glides along the letters.
+// Hover / focus: the studio highlight glides along the letters.
 const gloss = { y: 0 }
 const sweep = (to: number) =>
   gsap.to(gloss, {
@@ -267,7 +317,7 @@ const sweep = (to: number) =>
     duration: 0.9,
     ease: 'sine.inOut',
     onUpdate: () => {
-      world.setGlossRotation(gloss.y)
+      world.setGlossRotation(gloss.y + main.scrollTop * 0.0007)
       requestRender()
     },
   })
@@ -290,11 +340,10 @@ window.addEventListener('resize', () => {
 function staticFallback() {
   body.classList.remove('is-intro')
   canvas.hidden = true
-  skipBtn.hidden = true
   const img = document.querySelector<HTMLImageElement>('#fallback-name')!
   img.src = '/name-fallback.png'
   img.hidden = false
-  document.documentElement.style.setProperty('--nav-h', '110px')
+  document.documentElement.style.setProperty('--nav-h', '104px')
 }
 
 // ---------------------------------------------------------------- go
@@ -308,10 +357,34 @@ function staticFallback() {
   skip: () => goFinal(false),
 }
 
-const seen = store.get(SEEN_KEY) === '1'
-if (reduceMotion || seen || new URLSearchParams(location.search).has('final')) {
-  void goFinal(!reduceMotion)
-} else {
+if (params.has('capture')) {
+  // Deterministic frame capture for review: the caller advances time explicitly.
   startIntro()
+  gsap.killTweensOf(world.post.uniforms.fade)
+  world.post.uniforms.fade.value = 1
+  setHint('')
+  clearTimeout(hintTimer)
+  removeIntroListeners()
+  const follow = { on: false, width: 0.12 }
+  Object.assign((window as unknown as { site: object }).site, {
+    follow: (on: boolean, width = 0.12) => Object.assign(follow, { on, width }),
+    step: (dt: number) => {
+      const sim = world.sim
+      const target = sim.t + dt
+      while (sim.t + sim.dt <= target) sim.step()
+      world.sync(dt)
+      if (follow.on) {
+        pose.frameWidth = follow.width
+        pose.target.set(sim.tip.x, 0, sim.tip.z)
+        world.stage.placeCamera(pose)
+      }
+      world.render()
+      return sim.t
+    },
+  })
+} else {
+  const seen = store.get(SEEN_KEY) === '1'
+  if (reduceMotion || seen || params.has('final')) void goFinal(!reduceMotion)
+  else startIntro()
+  requestAnimationFrame(frame)
 }
-requestAnimationFrame(frame)

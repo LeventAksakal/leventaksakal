@@ -8,9 +8,9 @@ export default defineConfig({
     assetsInlineLimit: 8192,
     rollupOptions: {
       input: {
-        main: resolve(__dirname, 'index.html'),
-        strokes: resolve(__dirname, 'lab/strokes/index.html'),
-        paste: resolve(__dirname, 'lab/paste/index.html'),
+        main: resolve(import.meta.dirname, 'index.html'),
+        strokes: resolve(import.meta.dirname, 'lab/strokes/index.html'),
+        paste: resolve(import.meta.dirname, 'lab/paste/index.html'),
       },
     },
   },

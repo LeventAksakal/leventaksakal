@@ -64,6 +64,7 @@ export class PasteSimulation {
   private prevContact = { x: 0, z: 0 }
   private liftDrainDone = false
   private liftSpan0 = 0
+  private pendingPeak: { x: number; z: number; volume: number; radius: number; sharp: number; laid: number } | null = null
   private lastSpeed = 0
 
   constructor(set: StrokeSet, kin: KinematicsParams, phys: PhysicsParams, startTime = -0.6) {
@@ -199,6 +200,7 @@ export class PasteSimulation {
   }
 
   private beginStroke(si: number) {
+    this.layPeak(1)
     this.stroke = si
     this.sContact = 0
     this.liftDrainDone = false
@@ -260,7 +262,8 @@ export class PasteSimulation {
       this.setContact(a.x, a.z)
       if (s1 >= st.length - 1e-6) {
         this.liftDrainDone = true
-        this.liftSpan0 = Math.max(th.span(), this.kin.nozzleHeight * MM)
+        // Stretch is measured against the thread as it was while writing, not the rising nozzle.
+        this.liftSpan0 = this.kin.nozzleHeight * MM * 1.05
         th.state = 'necking'
       }
     }
@@ -288,13 +291,15 @@ export class PasteSimulation {
     }
 
     // 3) Near the end of the lift the next blob swells out of the nozzle.
-    if (nextStroke && tau > 0.72 && th.state !== 'necking') {
+    if (nextStroke && tau > 0.72 && (th.state === 'none' || th.state === 'drop')) {
       th.state = 'drop'
       const g = smoothstep(0.72, 1, tau)
       const rE = this.extrudateRadius
       for (let i = 0; i < th.n; i++) {
         const u = i / (th.n - 1)
-        th.pos.set([this.tip.x, this.tip.y - u * rE * 2.2 * g, this.tip.z], i * 3)
+        // The drop hangs from the nozzle but never below the paper or the paste already there.
+        const room = Math.max(0, this.tip.y - floor(this.tip.x, this.tip.z) - rE * 0.4)
+        th.pos.set([this.tip.x, this.tip.y - u * Math.min(rE * 2.2 * g, room), this.tip.z], i * 3)
         th.radius[i] = rE * g * (0.75 + 0.35 * Math.sin(Math.PI * Math.min(1, u * 1.1)))
       }
     }
@@ -305,22 +310,42 @@ export class PasteSimulation {
     const th = this.thread
     const rE = this.extrudateRadius
     const airVolume = Math.PI * rE * rE * this.liftSpan0
-    const peak = p.tailPeakFraction * airVolume
     const halfWidth = Math.sqrt((4 * this.plan.nominalArea * MM * MM) / (Math.PI * p.beadAspect)) / 2
-    this.field.depositDome(this.contact.x, this.contact.z, peak, Math.max(2 * p.cellSize, p.tailPeakRadius * halfWidth), 2.6, this.t, p)
-    this.stats.deposited += peak
-    this.stats.extruded += peak
+    // The fallen-back tail forms a peak about as tall as the bead again; its footprint follows
+    // from the volume (dome ∝ (1 − d²/r²)^s has volume π r² h / (s + 1)), within sane limits.
+    const sharp = 2.6
+    const peakHeight = 0.9 * p.beadAspect * 2 * halfWidth
+    let volume = p.tailPeakFraction * airVolume
+    const r = Math.min(1.1 * halfWidth, Math.max(0.35 * halfWidth, Math.sqrt((volume * (sharp + 1)) / (Math.PI * peakHeight))))
+    volume = Math.min(volume, (Math.PI * r * r * peakHeight) / (sharp + 1))
+    this.pendingPeak = { x: this.contact.x, z: this.contact.z, volume, radius: Math.max(2 * p.cellSize, r), sharp, laid: 0 }
     th.state = 'snapped'
     th.sinceSnap = 0
     th.snapNode = Math.round(th.n * 0.55)
+  }
+
+  /** Lay the tail peak progressively while the lower stub collapses (no one-frame pop). */
+  private layPeak(fraction: number) {
+    const pk = this.pendingPeak
+    if (!pk) return
+    const target = Math.min(1, fraction)
+    const dV = pk.volume * (target - pk.laid)
+    if (dV > 0) {
+      this.field.depositDome(pk.x, pk.z, dV, pk.radius, pk.sharp, this.t, this.phys)
+      this.stats.deposited += dV
+      this.stats.extruded += dV
+      pk.laid = target
+    }
+    if (target >= 1) this.pendingPeak = null
   }
 
   /** After a snap: upper stub retracts into the nozzle, lower stub collapses into the peak. */
   private animateSnap(dt: number) {
     const th = this.thread
     th.sinceSnap += dt
-    const k = Math.min(1, th.sinceSnap / 0.14)
+    const k = Math.min(1, th.sinceSnap / 0.1)
     const e = 1 - (1 - k) * (1 - k)
+    this.layPeak(e)
     for (let i = 0; i < th.n; i++) {
       const o = i * 3
       const target = i < th.snapNode ? this.tip : this.contact
@@ -329,7 +354,10 @@ export class PasteSimulation {
       th.pos[o + 2] += (target.z - th.pos[o + 2]) * e * 0.35
       th.radius[i] *= 1 - 0.25 * e
     }
-    if (k >= 1) th.state = 'none'
+    if (k >= 1) {
+      this.layPeak(1)
+      th.state = 'none'
+    }
   }
 
   /** Jump to the settled end state with a pre-baked field (already decoded into `field`). */

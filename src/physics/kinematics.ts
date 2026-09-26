@@ -370,11 +370,14 @@ export function sampleNozzle(plan: WritingPlan, t: number, p: KinematicsParams):
       }
     }
   }
+  // After the last stroke the tube lifts away smoothly (no jump to lift height).
+  const since = Math.max(0, t - last.t[last.t.length - 1])
+  const rise = Math.min(1, since / 0.45)
   return {
     phase: 'after',
     x: last.x[last.x.length - 1],
     y: last.y[last.y.length - 1],
-    z: p.liftHeight,
+    z: p.nozzleHeight + (p.liftHeight - p.nozzleHeight) * rise * rise * (3 - 2 * rise),
     speed: 0,
     ...dirAt(last, last.x.length - 1),
     stroke: plan.strokes.length - 1,

@@ -23,7 +23,7 @@ export class ThreadMesh {
         const b = r * SIDES + ((s + 1) % SIDES)
         const c = a + SIDES
         const d = b + SIDES
-        idx.push(a, c, b, b, c, d)
+        idx.push(a, b, c, b, d, c) // outward-facing: rings run counter-clockwise around the tangent
       }
     this.geo = new THREE.BufferGeometry()
     this.geo.setAttribute('position', new THREE.BufferAttribute(this.pos, 3).setUsage(THREE.DynamicDrawUsage))

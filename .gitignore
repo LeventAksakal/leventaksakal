@@ -7,3 +7,4 @@ tools/out/*
 !tools/out/specimen-*.png
 __pycache__/
 dist-single
+tools/fonts/*-VF.ttf

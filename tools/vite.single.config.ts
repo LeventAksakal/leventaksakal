@@ -3,7 +3,7 @@
 import { resolve } from 'node:path'
 import { defineConfig } from 'vite'
 
-const root = resolve(__dirname, '..')
+const root = resolve(import.meta.dirname, '..')
 export default defineConfig({
   root,
   build: {
