@@ -1,0 +1,285 @@
+{
+  "$comment": "Content archived from the v1 Vue site (commit 20e5667) for reuse in v2. Text is verbatim from website/src/i18n/messages.ts and website/src/assets/blogs/*.html. Photos were moved to content/media/.",
+  "person": {
+    "fullName": "Zafer Levent Aksakal",
+    "displayName": "Levent Aksakal",
+    "education": "Computer Engineering, Özyeğin University",
+    "location": "Bursa, Türkiye",
+    "links": {
+      "github": "https://github.com/LeventAksakal",
+      "website": "https://leventaksakal.dev"
+    },
+    "interests": [
+      "guitar",
+      "cooking and desserts",
+      "calisthenics",
+      "games",
+      "films",
+      "mountaineering",
+      "rock climbing",
+      "skiing",
+      "water skiing",
+      "hiking",
+      "cycling"
+    ],
+    "avatar": "media/avatar.jpg"
+  },
+  "i18n": {
+    "en": {
+      "nav": {
+        "about": "About",
+        "work": "Work",
+        "gallery": "Gallery",
+        "blogs": "Blogs"
+      },
+      "about": {
+        "opener": "I'm ",
+        "paragraphs": [
+          "a computer engineering graduate from Özyeğin University, currently based in Bursa, Türkiye. I see myself as a versatile programmer who enjoys the full spectrum of development - from databases and backend servers to web frameworks, ML pipelines, and cloud infrastructure. I love building complete solutions that solve real problems.",
+          "My approach to development is driven by curiosity and a desire to understand how things work at every layer. Whether I'm designing system architectures, optimizing database queries, or experimenting with machine learning models, I focus on creating robust, maintainable solutions that can scale with real-world demands.",
+          "Beyond coding, I'm passionate about staying active and exploring new experiences. You'll find me playing guitar, experimenting in the kitchen with new recipes and desserts, or training calisthenics. I'm also a gamer and love immersive storytelling through films and games.",
+          "I thrive on adventure and outdoor challenges - from mountaineering and rock climbing to skiing, water skiing, hiking, and cycling. Whether it's finding the right line down a mountain or navigating a tricky climbing route, I just love being outdoors and pushing myself physically."
+        ]
+      },
+      "work": {
+        "subtitle": "Featured Projects",
+        "currentFocus": {
+          "opener": "I work on ",
+          "content": "system design and fullstack applications using Vue, TypeScript, and Rust for most of my recent work. I've worked with different languages and tools throughout my career and I'm flexible to adapt to whatever technology best fits the project needs."
+        },
+        "featuredProjects": [
+          {
+            "id": "moqtail",
+            "title": "MOQtail",
+            "description": "Open-source Media-over-QUIC library implementing the latest MoQ draft specification. Major contributor to this TypeScript/Rust project focused on ultra-low latency live streaming.",
+            "technologies": [
+              "TypeScript",
+              "Rust",
+              "QUIC",
+              "WebCodecs",
+              "Media Streaming"
+            ],
+            "link": "https://moqtail.dev",
+            "repo": "https://github.com/kixelated/moqtail"
+          },
+          {
+            "id": "kind-cluster-k6",
+            "title": "Kind Cluster K6 Testing",
+            "description": "Complete Kubernetes testing environment using Kind clusters with K6 load testing. Includes Prometheus monitoring, Grafana visualization, and automated deployment scripts for stress testing applications.",
+            "technologies": [
+              "Kubernetes",
+              "Kind",
+              "K6",
+              "Prometheus",
+              "Grafana",
+              "Docker"
+            ],
+            "repo": "https://github.com/LeventAksakal/kind-cluster-k6"
+          },
+          {
+            "id": "personal-website",
+            "title": "Personal Website",
+            "description": "Vue 3 portfolio website with internationalization support and responsive design. Features dynamic background rotation, glass morphism UI, and Element Plus components.",
+            "technologies": [
+              "Vue 3",
+              "TypeScript",
+              "Tailwind CSS",
+              "Element Plus",
+              "Vue i18n",
+              "Vite"
+            ],
+            "link": "https://leventaksakal.dev",
+            "repo": "https://github.com/LeventAksakal/leventaksakal"
+          }
+        ],
+        "previousPositions": {
+          "title": "Previous Positions",
+          "positions": [
+            {
+              "company": "Constructor Technology",
+              "position": "Software Engineering Intern (Remote)",
+              "startDate": "Apr 2024",
+              "endDate": "Jul 2024",
+              "isOngoing": false,
+              "description": "WebSocket server development for web-based video conferencing product with Redis integration",
+              "website": "https://constructor.tech/",
+              "favicon": "https://constructor.tech/sites/default/files/favicon_1.ico"
+            },
+            {
+              "company": "TÜBİTAK SAGE",
+              "position": "Software Engineering Intern (Onsite)",
+              "startDate": "Aug 2024",
+              "endDate": "Sep 2024",
+              "isOngoing": false,
+              "description": "Mobile test automation with Appium and Android kernel research for Ethernet to USB-C drivers",
+              "website": "https://www.sage.tubitak.gov.tr/",
+              "favicon": "https://www.sage.tubitak.gov.tr/favicon.ico"
+            }
+          ]
+        }
+      },
+      "gallery": {
+        "title": "Gallery",
+        "subtitle": "Moments & Places",
+        "description": "A collection of moments from my journey - places I've visited, activities I enjoy, and experiences that inspire my work and creativity."
+      },
+      "common": {
+        "name": "Zafer Levent Aksakal"
+      }
+    },
+    "tr": {
+      "nav": {
+        "about": "Hakkımda",
+        "work": "Çalışmalarım",
+        "gallery": "Galeri",
+        "blogs": "Bloglar"
+      },
+      "about": {
+        "opener": "Ben ",
+        "paragraphs": [
+          "Özyeğin Üniversitesi Bilgisayar Mühendisliği mezunuyum ve şu an Bursa'da yaşıyorum. Kendimi çok yönlü bir programcı olarak tanımlıyorum - veritabanlarından backend'e, web framework'lerinden ML pipeline'larına ve bulut sistemlerine kadar her alanda çalışmayı seviyorum. Gerçek problemlere tam çözümler üretmeye odaklanırım.",
+          "Geliştirme yaparken merak güdümlü bir yaklaşımım var, her katmanda işlerin nasıl döndüğünü anlama isteği duyarım. Sistem mimarileri tasarlarken, veritabanı sorgularını optimize ederken ya da makine öğrenmesi modelleriyle deneyler yaparken, gerçek dünya ihtiyaçlarına ölçeklenebilen sağlam çözümler üretmeye odaklanırım.",
+          "Kodlama dışında aktif kalmaya ve yeni deneyimler keşfetmeye tutkuluyum. Beni gitar çalarken, mutfakta yeni tarifler ve tatlılarla deneyler yaparken ya da kalistenik antrenmanı yaparken bulabilirsiniz. Ayrıca oyun oynayıp film ve oyunların sürükleyici hikayelerini de çok severim.",
+          "Macera ve açık hava zorluklarında kendimi buluyorum - dağcılık, kaya tırmanışı, kayak, su kayağı, yürüyüş ve bisiklet. Dağda doğru rotayı bulmak ya da zorlu tırmanış rotalarında ilerlemek, açık havada olmak ve kendimi fiziksel olarak zorlamak hoşuma gidiyor."
+        ]
+      },
+      "work": {
+        "subtitle": "Öne Çıkan Projeler",
+        "currentFocus": {
+          "opener": "Yaptığım iş genelde ",
+          "content": "sistem tasarımı ve fullstack uygulamalar - son dönemde çoğunlukla Vue, TypeScript ve Rust kullanıyorum. Geçmişte farklı diller ve araçlarla çalıştım, projenin ihtiyacına göre hangi teknoloji daha uygunsa ona uyum sağlayabilirim."
+        },
+        "featuredProjects": [
+          {
+            "id": "moqtail",
+            "title": "MOQtail",
+            "description": "En güncel MoQ draft spesifikasyonunu uygulayan açık kaynak Media-over-QUIC kütüphanesi. Ultra-düşük gecikme canlı yayın odaklı bu TypeScript/Rust projesine ana katılımcı olarak katkıda bulundum.",
+            "technologies": [
+              "TypeScript",
+              "Rust",
+              "QUIC",
+              "WebCodecs",
+              "Media Streaming"
+            ],
+            "link": "https://moqtail.dev",
+            "repo": "https://github.com/kixelated/moqtail"
+          },
+          {
+            "id": "kind-cluster-k6",
+            "title": "Kind Cluster K6 Test Ortamı",
+            "description": "Kind cluster ile K6 yük testi kullanarak eksiksiz Kubernetes test ortamı. Prometheus monitoring, Grafana görselleştirme ve uygulamaları stres testine tabi tutmak için otomatik deployment scriptleri içeriyor.",
+            "technologies": [
+              "Kubernetes",
+              "Kind",
+              "K6",
+              "Prometheus",
+              "Grafana",
+              "Docker"
+            ],
+            "repo": "https://github.com/LeventAksakal/kind-cluster-k6"
+          },
+          {
+            "id": "personal-website",
+            "title": "Kişisel Website",
+            "description": "Çoklu dil desteği ve responsive tasarım içeren Vue 3 portfolio sitesi. Dinamik arkaplan rotasyonu, cam morfizmi UI ve Element Plus bileşenleri kullanılıyor.",
+            "technologies": [
+              "Vue 3",
+              "TypeScript",
+              "Tailwind CSS",
+              "Element Plus",
+              "Vue i18n",
+              "Vite"
+            ],
+            "link": "https://leventaksakal.dev",
+            "repo": "https://github.com/LeventAksakal/leventaksakal"
+          }
+        ],
+        "previousPositions": {
+          "title": "Önceki Pozisyonlar",
+          "positions": [
+            {
+              "company": "Constructor Technology",
+              "position": "Yazılım Mühendisliği Stajyeri (Uzaktan)",
+              "startDate": "Nis 2024",
+              "endDate": "Tem 2024",
+              "isOngoing": false,
+              "description": "Web tabanlı video konferans ürünü için Redis entegrasyonlu WebSocket server geliştirme",
+              "website": "https://constructor.tech/",
+              "favicon": "https://constructor.tech/sites/default/files/favicon_1.ico"
+            },
+            {
+              "company": "TÜBİTAK SAGE",
+              "position": "Yazılım Mühendisliği Stajyeri (Yerinde)",
+              "startDate": "Ağu 2024",
+              "endDate": "Eyl 2024",
+              "isOngoing": false,
+              "description": "Appium ile mobil test otomasyonu ve Ethernet-USB-C sürücüleri için Android kernel araştırması",
+              "website": "https://www.sage.tubitak.gov.tr/",
+              "favicon": "https://www.sage.tubitak.gov.tr/favicon.ico"
+            }
+          ]
+        }
+      },
+      "gallery": {
+        "title": "Galeri",
+        "subtitle": "Anılar ve Yerler",
+        "description": "Yolculuğumdan anılar - ziyaret ettiğim yerler, keyif aldığım aktiviteler ve işime ve yaratıcılığıma ilham veren deneyimler."
+      },
+      "common": {
+        "name": "Zafer Levent Aksakal"
+      }
+    }
+  },
+  "draftProjectsV2": [
+    {
+      "id": "kampus",
+      "title": "Kampüs",
+      "description": "An open-source platform for university life in Türkiye — the institutional side (schedule, meals, announcements, events) plus a verified-student community layer. Built for students, by students.",
+      "status": "Product specification"
+    },
+    {
+      "id": "cutn-dolls",
+      "title": "Cut'n Dolls",
+      "description": "A multiplayer physics party game in Unreal Engine 5 with a three-person team — run a market stall by day, fight the other shopkeepers by night.",
+      "status": "Pre-production"
+    }
+  ],
+  "blogs": [
+    {
+      "slug": "starting-out-as-developer",
+      "format": "html",
+      "body": "<div class=\"prose prose-slate max-w-none\">\n  <p class=\"text-lg text-slate-600 mb-6 italic\">\n    Looking back at my early days as a developer, I realize how much the landscape has changed, yet\n    the fundamentals remain the same.\n  </p>\n\n  <h2>The Beginning</h2>\n  <p>\n    Every developer remembers their first \"Hello World\" program. Mine was in JavaScript, displayed\n    in a simple HTML page that I created in Notepad. The excitement of seeing those two words appear\n    in a browser was indescribable. It was the moment I realized that code could create something\n    visible and interactive.\n  </p>\n\n  <p>\n    But the journey from that first program to building meaningful applications wasn't\n    straightforward. I spent countless hours reading documentation, watching tutorials, and most\n    importantly, <strong>building things</strong>.\n  </p>\n\n  <h2>Learning by Building</h2>\n  <p>\n    One of the most valuable lessons I learned early on was that reading about programming is very\n    different from actually programming. You can read about loops, functions, and data structures\n    all day, but until you're debugging why your counter isn't incrementing correctly at 2 AM, you\n    haven't really learned.\n  </p>\n\n  <blockquote>\n    <p>\n      \"The best way to learn to program is to write programs.\" - This advice, though simple, became\n      my north star.\n    </p>\n  </blockquote>\n\n  <p>I started with small projects:</p>\n  <ul>\n    <li>A simple calculator that taught me about event handling</li>\n    <li>A to-do list that introduced me to DOM manipulation</li>\n    <li>A weather app that showed me how to work with APIs</li>\n    <li>A portfolio website that combined everything I'd learned</li>\n  </ul>\n\n  <h2>The Pattern Recognition Phase</h2>\n  <p>\n    After building several projects, something interesting happened. I started recognizing patterns.\n    The way I handled form validation in one project could be applied to another. The API\n    integration logic I wrote for the weather app could be adapted for a different service.\n  </p>\n\n  <p>\n    This is when programming truly clicked for me. It wasn't just about memorizing syntax or copying\n    code from Stack Overflow (though let's be honest, we all do that). It was about understanding\n    the underlying patterns and principles that make code work.\n  </p>\n\n  <h3>Key Patterns I Discovered</h3>\n  <ol>\n    <li>\n      <strong>Separation of Concerns</strong> - Keep your HTML, CSS, and JavaScript focused on their\n      specific roles\n    </li>\n    <li>\n      <strong>DRY (Don't Repeat Yourself)</strong> - If you're writing the same code twice, it's\n      time to create a function\n    </li>\n    <li><strong>Error Handling</strong> - Always assume something will go wrong and plan for it</li>\n    <li><strong>User Experience</strong> - Code isn't just for computers; it's for people</li>\n  </ol>\n\n  <h2>The Modern Landscape</h2>\n  <p>\n    Today's development environment is both easier and more complex than when I started. We have\n    incredible tools like Vue.js, React, and TypeScript that make building complex applications more\n    manageable. Build tools like Vite make development lightning-fast.\n  </p>\n\n  <p>\n    But with great power comes great complexity. The number of choices can be overwhelming for\n    newcomers. Should you learn React or Vue? TypeScript or JavaScript? REST or GraphQL?\n  </p>\n\n  <h2>Advice for New Developers</h2>\n  <p>If you're just starting out, here's what I wish someone had told me:</p>\n\n  <div class=\"bg-slate-100/20 p-6 rounded-lg border border-slate-200/30 my-6\">\n    <h4 class=\"text-slate-800 font-semibold mb-3\">Essential Tips:</h4>\n    <ul class=\"space-y-2\">\n      <li>\n        ✅ <strong>Start with the basics</strong> - HTML, CSS, and JavaScript are still the\n        foundation\n      </li>\n      <li>✅ <strong>Build projects</strong> - Theory is important, but practice is everything</li>\n      <li>\n        ✅ <strong>Don't chase the latest framework</strong> - Master one thing before moving to the\n        next\n      </li>\n      <li>✅ <strong>Learn to debug</strong> - This skill will save you countless hours</li>\n      <li>✅ <strong>Join communities</strong> - Other developers are your best resource</li>\n    </ul>\n  </div>\n\n  <h2>The Journey Continues</h2>\n  <p>\n    The beautiful thing about software development is that the learning never stops. Every project\n    teaches you something new. Every bug you fix makes you a better problem solver. Every feature\n    you build expands your understanding of what's possible.\n  </p>\n\n  <p>\n    Looking back, I'm grateful for every frustrating bug, every late night debugging session, and\n    every moment of imposter syndrome. They were all part of the journey that led me to where I am\n    today.\n  </p>\n\n  <p class=\"text-slate-600 italic mt-8\">\n    To all the developers just starting out: embrace the confusion, celebrate the small wins, and\n    remember that every expert was once a beginner. Your journey is just beginning, and it's going\n    to be amazing.\n  </p>\n</div>"
+    },
+    {
+      "slug": "vue-performance-optimization",
+      "format": "html",
+      "body": "<div class=\"prose prose-slate max-w-none\">\n  <p class=\"text-lg text-slate-600 mb-6 italic\">\n    Performance optimization in Vue.js isn't just about making your app faster—it's about creating\n    better user experiences and more maintainable code.\n  </p>\n\n  <h2>The Performance Mindset</h2>\n  <p>\n    When I first started working with Vue.js, I was amazed by how easy it was to build reactive\n    applications. But as my projects grew larger and more complex, I started noticing performance\n    bottlenecks. The framework was fast, but my code wasn't taking full advantage of its\n    capabilities.\n  </p>\n\n  <p>\n    Performance optimization became a journey of understanding not just Vue's reactivity system, but\n    also how browsers work, how users interact with applications, and how to write code that scales.\n  </p>\n\n  <h2>Key Optimization Strategies</h2>\n\n  <h3>1. Smart Component Composition</h3>\n  <p>\n    One of the biggest performance wins comes from structuring your components intelligently.\n    Instead of creating monolithic components that do everything, break them down into smaller,\n    focused pieces.\n  </p>\n\n  <div class=\"bg-slate-100/20 p-6 rounded-lg border border-slate-200/30 my-6\">\n    <h4 class=\"text-slate-800 font-semibold mb-3\">Example: List Optimization</h4>\n    <pre\n      class=\"bg-slate-800 text-slate-100 p-4 rounded overflow-x-auto\"\n    ><code><!-- Instead of rendering everything in one component -->\n&lt;template&gt;\n  &lt;div class=\"user-list\"&gt;\n    &lt;div v-for=\"user in users\" :key=\"user.id\" class=\"user-card\"&gt;\n      &lt;!-- Heavy computation for each user --&gt;\n      &lt;ExpensiveUserProfile :user=\"user\" /&gt;\n    &lt;/div&gt;\n  &lt;/div&gt;\n&lt;/template&gt;\n\n<!-- Create a separate component for each user -->\n&lt;template&gt;\n  &lt;div class=\"user-list\"&gt;\n    &lt;UserCard v-for=\"user in users\" :key=\"user.id\" :user=\"user\" /&gt;\n  &lt;/div&gt;\n&lt;/template&gt;</code></pre>\n  </div>\n\n  <h3>2. Reactive Data Optimization</h3>\n  <p>\n    Vue's reactivity is powerful, but it can be a performance bottleneck if not used wisely. Not\n    every piece of data needs to be reactive.\n  </p>\n\n  <ul>\n    <li>\n      <strong>Use <code>markRaw()</code></strong> for data that should never be reactive\n    </li>\n    <li>\n      <strong>Use <code>shallowRef()</code></strong> for large objects that don't need deep\n      reactivity\n    </li>\n    <li>\n      <strong>Use <code>readonly()</code></strong> for data that won't change\n    </li>\n  </ul>\n\n  <h3>3. Virtual Scrolling for Large Lists</h3>\n  <p>\n    When displaying thousands of items, render only what's visible. I've seen 10x performance\n    improvements just by implementing virtual scrolling for large datasets.\n  </p>\n\n  <h3>4. Lazy Loading and Code Splitting</h3>\n  <p>Don't load everything at once. Use Vue's built-in lazy loading for routes and components:</p>\n\n  <pre\n    class=\"bg-slate-800 text-slate-100 p-4 rounded overflow-x-auto\"\n  ><code>// Route-level code splitting\nconst UserProfile = () => import('./components/UserProfile.vue')\n\n// Component-level lazy loading\nconst HeavyChart = defineAsyncComponent(() => \n  import('./components/HeavyChart.vue')\n)</code></pre>\n\n  <h2>Measuring Performance</h2>\n  <p>You can't optimize what you don't measure. Here are the tools I use regularly:</p>\n\n  <div class=\"grid grid-cols-1 md:grid-cols-2 gap-4 my-6\">\n    <div class=\"bg-slate-100/20 p-4 rounded-lg border border-slate-200/30\">\n      <h4 class=\"font-semibold text-slate-800 mb-2\">Browser Tools</h4>\n      <ul class=\"text-sm space-y-1\">\n        <li>• Chrome DevTools Performance tab</li>\n        <li>• Vue DevTools</li>\n        <li>• Lighthouse audits</li>\n        <li>• Network tab for bundle analysis</li>\n      </ul>\n    </div>\n    <div class=\"bg-slate-100/20 p-4 rounded-lg border border-slate-200/30\">\n      <h4 class=\"font-semibold text-slate-800 mb-2\">Build Tools</h4>\n      <ul class=\"text-sm space-y-1\">\n        <li>• Vite bundle analyzer</li>\n        <li>• webpack-bundle-analyzer</li>\n        <li>• Performance budgets</li>\n        <li>• CI performance monitoring</li>\n      </ul>\n    </div>\n  </div>\n\n  <h2>Real-World Example</h2>\n  <p>\n    In a recent project, I had a dashboard with real-time data updates. Initially, every data change\n    triggered a full re-render of all components. Here's how I optimized it:\n  </p>\n\n  <ol>\n    <li>\n      <strong>Identified the bottleneck</strong> - Used Vue DevTools to find components re-rendering\n      unnecessarily\n    </li>\n    <li>\n      <strong>Implemented selective updates</strong> - Only updated components when their specific\n      data changed\n    </li>\n    <li>\n      <strong>Added memoization</strong> - Cached expensive calculations using\n      <code>computed</code> properties\n    </li>\n    <li>\n      <strong>Optimized the update frequency</strong> - Debounced rapid updates to reduce noise\n    </li>\n  </ol>\n\n  <p>\n    The result? Page load time decreased by 60%, and the application felt significantly more\n    responsive.\n  </p>\n\n  <h2>Performance Best Practices</h2>\n\n  <div class=\"bg-slate-100/20 p-6 rounded-lg border border-slate-200/30 my-6\">\n    <h4 class=\"text-slate-800 font-semibold mb-3\">Essential Checklist:</h4>\n    <ul class=\"space-y-2\">\n      <li>\n        ✅ <strong>Use <code>v-once</code></strong> for static content that won't change\n      </li>\n      <li>\n        ✅ <strong>Implement <code>v-memo</code></strong> for expensive list items\n      </li>\n      <li>✅ <strong>Lazy load images</strong> and non-critical resources</li>\n      <li>✅ <strong>Optimize bundle size</strong> with tree shaking and code splitting</li>\n      <li>\n        ✅ <strong>Use <code>keep-alive</code></strong> for components that are expensive to\n        recreate\n      </li>\n      <li>\n        ✅ <strong>Profile regularly</strong> - Performance optimization is an ongoing process\n      </li>\n    </ul>\n  </div>\n\n  <h2>The 80/20 Rule</h2>\n  <p>\n    Remember that 80% of performance issues usually come from 20% of your code. Focus on finding and\n    optimizing those critical bottlenecks rather than trying to optimize everything. Use profiling\n    tools to identify where your app actually spends its time.\n  </p>\n\n  <p>\n    Performance optimization is a skill that improves with practice. Start with the basics, measure\n    everything, and always prioritize user experience over perfect code. Your users will thank you\n    for it.\n  </p>\n\n  <p class=\"text-slate-600 italic mt-8\">\n    Happy coding, and remember: premature optimization is the root of all evil, but timely\n    optimization is the root of great user experiences!\n  </p>\n</div>"
+    }
+  ],
+  "gallery": [
+    {
+      "file": "media/bg-cay.jpg",
+      "place": "Çay"
+    },
+    {
+      "file": "media/bg-denizli.jpg",
+      "place": "Denizli"
+    },
+    {
+      "file": "media/bg-kalekoy.jpg",
+      "place": "Kaleköy"
+    },
+    {
+      "file": "media/bg-kekova.jpg",
+      "place": "Kekova"
+    },
+    {
+      "file": "media/bg-mihraplı.jpg",
+      "place": "Mihraplı"
+    },
+    {
+      "file": "media/bg-ozu.jpg",
+      "place": "Özyeğin University"
+    }
+  ]
+}
