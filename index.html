@@ -19,6 +19,10 @@
     <img id="fallback-name" alt="" hidden />
     <a id="home" href="/" aria-label="Levent Aksakal, home"><span class="sr-only">Levent Aksakal</span></a>
     <p id="hint" aria-hidden="true"></p>
+    <nav class="social" aria-label="Profiles">
+      <a class="github" href="https://github.com/LeventAksakal" aria-label="GitHub"><svg aria-hidden="true"><use href="#logo-github" /></svg></a>
+      <a class="linkedin" href="https://www.linkedin.com/in/levent-aksakal-85b450236/" aria-label="LinkedIn"><svg aria-hidden="true"><use href="#logo-linkedin" /></svg></a>
+    </nav>
 
     <svg class="defs" aria-hidden="true" focusable="false">
       <defs>
@@ -30,6 +34,9 @@
           <path fill="none" stroke="url(#paint)" stroke-width="0.085em" stroke-linecap="round" vector-effect="non-scaling-stroke" d="M4 8.5 C 48 5.5, 96 10.5, 150 7.8 S 246 5.2, 296 7.5" />
           <path fill="none" stroke="#fffbe9" stroke-opacity="0.8" stroke-width="0.018em" stroke-linecap="round" vector-effect="non-scaling-stroke" d="M8 7 C 50 4.4, 96 9.2, 150 6.6 S 244 4.2, 290 6.2" />
         </symbol>
+        <!-- GitHub mark: primer/octicons mark-github-24 (GitHub). LinkedIn "in" bug: devicon linkedin-plain (MIT). -->
+        <symbol id="logo-github" viewBox="0 0 24 24"><path fill="currentColor" d="M10.226 17.284c-2.965-.36-5.054-2.493-5.054-5.256 0-1.123.404-2.336 1.078-3.144-.292-.741-.247-2.314.09-2.965.898-.112 2.111.36 2.83 1.01.853-.269 1.752-.404 2.853-.404 1.1 0 1.999.135 2.807.382.696-.629 1.932-1.1 2.83-.988.315.606.36 2.179.067 2.942.72.854 1.101 2 1.101 3.167 0 2.763-2.089 4.852-5.098 5.234.763.494 1.28 1.572 1.28 2.807v2.336c0 .674.561 1.056 1.235.786 4.066-1.55 7.255-5.615 7.255-10.646C23.5 6.188 18.334 1 11.978 1 5.62 1 .5 6.188.5 12.545c0 4.986 3.167 9.12 7.435 10.669.606.225 1.19-.18 1.19-.786V20.63a2.9 2.9 0 0 1-1.078.224c-1.483 0-2.359-.808-2.987-2.313-.247-.607-.517-.966-1.034-1.033-.27-.023-.359-.135-.359-.27 0-.27.45-.471.898-.471.652 0 1.213.404 1.797 1.235.45.651.921.943 1.483.943.561 0 .92-.202 1.437-.719.382-.381.674-.718.944-.943" /></symbol>
+        <symbol id="logo-linkedin" viewBox="0 0 128 128"><path fill="currentColor" d="M116 3H12a8.91 8.91 0 00-9 8.8v104.42a8.91 8.91 0 009 8.78h104a8.93 8.93 0 009-8.81V11.77A8.93 8.93 0 00116 3zM39.17 107H21.06V48.73h18.11zm-9-66.21a10.5 10.5 0 1110.49-10.5 10.5 10.5 0 01-10.54 10.48zM107 107H88.89V78.65c0-6.75-.12-15.44-9.41-15.44s-10.87 7.36-10.87 15V107H50.53V48.73h17.36v8h.24c2.42-4.58 8.32-9.41 17.13-9.41C103.6 47.28 107 59.35 107 75z" /></symbol>
       </defs>
     </svg>
 
@@ -100,9 +107,20 @@
 
         <section class="contact" aria-labelledby="contact-h">
           <h2 id="contact-h" class="kicker">Contact</h2>
-          <p class="reach reveal">
-            <a href="https://github.com/LeventAksakal">github.com/<wbr />LeventAksakal<svg class="underline" aria-hidden="true"><use href="#stroke" /></svg></a>
-          </p>
+          <ul class="reach reveal" role="list">
+            <li>
+              <a class="github" href="https://github.com/LeventAksakal">
+                <svg class="logo" aria-hidden="true"><use href="#logo-github" /></svg>
+                <span class="where">GitHub</span><span class="handle">LeventAksakal<svg class="underline" aria-hidden="true"><use href="#stroke" /></svg></span>
+              </a>
+            </li>
+            <li>
+              <a class="linkedin" href="https://www.linkedin.com/in/levent-aksakal-85b450236/">
+                <svg class="logo" aria-hidden="true"><use href="#logo-linkedin" /></svg>
+                <span class="where">LinkedIn</span><span class="handle">levent-aksakal<svg class="underline" aria-hidden="true"><use href="#stroke" /></svg></span>
+              </a>
+            </li>
+          </ul>
         </section>
 
         <footer class="colophon">
