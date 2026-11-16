@@ -1,0 +1,107 @@
+---
+// One line of work or study. On the left a 16:9 title card that carries the real logo or
+// wordmark on its own brand ground; where none exists the card is set in type. Card and name
+// both lead to the thing itself when it has a public address.
+import '@fontsource-variable/fredoka';
+import type { Entry } from '../data/site';
+import { site } from '../data/site';
+
+interface Props { entry: Entry; stacked?: boolean }
+const { entry, stacked = false } = Astro.props;
+const { card } = entry;
+const Card = entry.href ? 'a' : 'div';
+const link = entry.href ? { href: entry.href, rel: 'noopener', tabindex: -1, 'aria-hidden': 'true' } : {};
+---
+<article class:list={['entry', { stacked }]} id={entry.id}>
+  {card.kind === 'logo' && (
+    <Card class:list={['card', card.fit]} style={`--ground: ${card.ground}`} {...link}>
+      <img src={card.src} alt={entry.href ? '' : `${card.alt} logo`} loading="lazy" decoding="async" />
+    </Card>
+  )}
+  {card.kind === 'babytell' && (
+    <Card class="card babytell" style="--ground: #f6efe5" {...link}><span>BabyTell</span></Card>
+  )}
+  {card.kind === 'word' && (
+    <Card class="card word" {...link}><span>{card.text.split(/(\d)/).map((part) => (/\d/.test(part) ? <b>{part}</b> : part))}</span></Card>
+  )}
+  {card.kind === 'repo' && (
+    <Card class="card repo" style="--ground: #0d1117" {...link}>
+      <span class="in">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 2.5A2.5 2.5 0 0 1 4.5 0h8.75a.75.75 0 0 1 .75.75v12.5a.75.75 0 0 1-.75.75h-2.5a.75.75 0 0 1 0-1.5h1.75v-2h-8a1 1 0 0 0-.714 1.7.75.75 0 1 1-1.072 1.05A2.495 2.495 0 0 1 2 11.5Zm10.5-1h-8a1 1 0 0 0-1 1v6.708A2.486 2.486 0 0 1 4.5 9h8ZM5 12.25a.25.25 0 0 1 .25-.25h3.5a.25.25 0 0 1 .25.25v3.25a.25.25 0 0 1-.4.2l-1.45-1.087a.249.249 0 0 0-.3 0L5.4 15.7a.25.25 0 0 1-.4-.2Z" /></svg>
+        <span class="path"><i>{site.github.handle}/</i>{card.repo}</span>
+      </span>
+    </Card>
+  )}
+
+  <header>
+    <h3>{entry.href ? <a href={entry.href} rel="noopener">{entry.name}</a> : entry.name}</h3>
+    <p class="meta">{entry.meta.map((m, i) => <span>{i > 0 && <i aria-hidden="true"> · </i>}{m}</span>)}</p>
+  </header>
+  <div class="body">
+    <p>{entry.text}</p>
+    {entry.note && <p class="note">{entry.note}</p>}
+    {entry.href && entry.link && (
+      <a class="out" href={entry.href} rel="noopener">
+        {entry.link}
+        <svg viewBox="0 0 14 14" aria-hidden="true"><path d="M3.5 10.5 10.5 3.5M5 3.5h5.5V9" /></svg>
+      </a>
+    )}
+  </div>
+</article>
+
+<style>
+  .entry { --card: clamp(132px, 13.5vw, 184px); display: grid; grid-template-columns: var(--card) minmax(0, 1fr); grid-template-areas: 'card head' 'card body'; grid-template-rows: auto 1fr; column-gap: clamp(16px, 1.8vw, 26px); padding: 24px 0; border-top: 1px solid var(--rule); scroll-margin-top: 16px; }
+  .card { grid-area: card; align-self: start; }
+  header { grid-area: head; }
+  .body { grid-area: body; }
+
+  h3 { font-weight: 650; font-size: 1.32rem; line-height: 1.18; letter-spacing: -.018em; }
+  h3 a { text-decoration: none; }
+  .meta { margin-top: 5px; font-size: .94rem; line-height: 1.35; color: var(--dim); }
+  /* A line breaks between the parts, not inside one ("2026 / to now"), unless a part alone is
+     wider than the column: then it wraps instead of pushing the page sideways. */
+  .meta span { display: inline-block; max-width: 100%; }
+  .meta i { font-style: normal; white-space: pre; }
+  .body p { margin-top: 10px; max-width: 58ch; color: var(--soft); }
+  .body .note { font-size: .94rem; color: var(--accent); }
+  .out { display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; font-size: .94rem; font-weight: 600; color: var(--accent); text-decoration: none; }
+  .out:hover { text-decoration: underline; }
+  .out svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; transition: transform .35s var(--ease); }
+  .out:hover svg { transform: translate(2px, -2px); }
+
+  /* Title card */
+  .card { position: relative; display: grid; place-items: center; aspect-ratio: 16 / 9; border-radius: 3px; overflow: hidden; background: var(--ground, var(--raise)); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .09), 0 16px 30px -20px rgb(0 0 0 / .9); container-type: inline-size; text-decoration: none; transition: transform .5s var(--ease), box-shadow .5s var(--ease); }
+  .entry:hover .card { transform: translateY(-3px) scale(1.015); }
+  a.card:hover { box-shadow: inset 0 0 0 1px rgb(255 255 255 / .09), 0 0 0 1px var(--accent), 0 16px 30px -20px rgb(0 0 0 / .9); }
+  /* Absolute, so the percentages are of the card: a tall mark must never outgrow it. */
+  .card img { position: absolute; inset: 0; margin: auto; width: 62%; height: 56%; object-fit: contain; }
+  .card.wide img { width: 80%; height: 46%; }
+  .card.tall img { width: 70%; height: 82%; }
+  .card.seal img { width: auto; height: 82%; aspect-ratio: 1; border-radius: 50%; box-shadow: 0 6px 18px -6px rgb(0 0 0 / .6); }
+
+  .babytell span { font-family: 'Fredoka Variable', var(--font); font-weight: 600; font-size: 19cqi; letter-spacing: -.01em; color: #be5422; }
+  .word { background: color-mix(in srgb, var(--accent) 14%, var(--bg)); }
+  .word span { font-stretch: 108%; font-weight: 620; font-size: 17cqi; letter-spacing: -.045em; color: var(--text); }
+  .word b { font-weight: inherit; color: var(--accent); }
+  .repo .in { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: space-between; padding: 7.5cqi; }
+  .repo svg { width: 9cqi; height: 9cqi; min-width: 18px; min-height: 18px; fill: #8b949e; }
+  .repo .path { font: 600 5.7cqi/1.24 ui-monospace, 'Cascadia Code', Menlo, Consolas, monospace; letter-spacing: -.02em; color: #e6edf3; overflow-wrap: anywhere; }
+  .repo i { display: block; font-style: normal; font-weight: 400; color: #8b949e; }
+
+  /* Smaller projects: the card sits on top. */
+  .stacked { grid-template-columns: minmax(0, 1fr); grid-template-areas: 'card' 'head' 'body'; grid-row: span 3; grid-template-rows: subgrid; align-content: start; border-top: 0; padding: 0 0 clamp(40px, 4.4vw, 60px); }
+  .stacked .card { width: 100%; margin-bottom: 18px; }
+  .stacked h3 { font-size: 1.2rem; }
+  .stacked .card.tall img { height: 72%; }
+
+  @media (max-width: 560px) {
+    .entry { --card: 116px; grid-template-areas: 'card head' 'body body'; grid-template-rows: auto auto; align-items: center; padding: 20px 0; }
+    .body p:first-child { margin-top: 14px; }
+    h3 { font-size: 1.2rem; }
+    .stacked { grid-template-columns: 116px minmax(0, 1fr); grid-template-areas: 'card head' 'body body'; grid-row: auto; grid-template-rows: auto auto; padding: 20px 0; border-top: 1px solid var(--rule); column-gap: 16px; }
+    .stacked .card { margin-bottom: 0; }
+    .repo .in { justify-content: center; align-items: center; }
+    .repo .path { display: none; }
+    .repo svg { width: 28px; height: 28px; }
+  }
+</style>

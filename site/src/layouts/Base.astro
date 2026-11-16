@@ -1,0 +1,70 @@
+---
+import '@fontsource-variable/archivo/wdth.css';
+import '../styles/global.css';
+import { getImage } from 'astro:assets';
+import { site, photos } from '../data/site';
+import Bar from '../components/Bar.astro';
+import share from '../assets/photos/kalekoy.jpg';
+
+interface Props {
+  title?: string;
+  description?: string;
+  home?: boolean;
+}
+const { title, description = site.description, home = false } = Astro.props;
+const fullTitle = title ? `${title} · ${site.name}` : site.name;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const og = await getImage({ src: share, width: 1200, height: 630, format: 'jpg', quality: 82 });
+const palettes = Object.fromEntries(photos.map((p) => [p.id, [p.bg, p.accent]]));
+const person = {
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  name: site.name,
+  url: site.url,
+  jobTitle: 'Software engineer',
+  sameAs: [site.github.href, site.linkedin.href],
+};
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <meta name="theme-color" content={photos[0].bg} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="alternate" type="application/rss+xml" title={`${site.name}: writing`} href="/rss.xml" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={new URL(og.src, Astro.site)} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <script type="application/ld+json" set:html={JSON.stringify(person)} />
+    <!-- Keep the colours of the last photograph looked at, before first paint. -->
+    <script is:inline define:vars={{ palettes }}>
+      try {
+        const p = palettes[sessionStorage.getItem('photo')];
+        if (p) {
+          const s = document.documentElement.style;
+          s.setProperty('--bg', p[0]);
+          s.setProperty('--accent', p[1]);
+        }
+      } catch {}
+    </script>
+  </head>
+  <body>
+    {!home && <Bar />}
+    <slot />
+    <footer class="foot-note">
+      <span>© {new Date().getFullYear()} {site.name}. Photographs are my own.</span>
+      <span>Cover art and logos belong to their owners. <a href="/rss.xml">RSS</a></span>
+    </footer>
+  </body>
+</html>

@@ -1,0 +1,57 @@
+---
+import { getCollection, render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('writing', (p) => import.meta.env.DEV || !p.data.draft);
+  return posts.map((post) => ({ params: { id: post.id }, props: { post } }));
+}
+const { post } = Astro.props;
+const { Content } = await render(post);
+const day = (d: Date) => d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+---
+<Base title={post.data.title} description={post.data.description}>
+  <main class="wrap">
+    <article>
+      <header>
+        <p class="when">
+          <time datetime={post.data.date.toISOString()}>{day(post.data.date)}</time>
+          {post.data.updated && <span>, updated {day(post.data.updated)}</span>}
+          {post.data.draft && <span class="draft"> · Draft, shown in dev only</span>}
+        </p>
+        <h1>{post.data.title}</h1>
+        <p class="standfirst">{post.data.description}</p>
+      </header>
+      <div class="prose"><Content /></div>
+      <footer><a href="/writing/">All writing</a></footer>
+    </article>
+  </main>
+</Base>
+
+<style>
+  main { padding-top: clamp(36px, 5vw, 72px); padding-bottom: clamp(80px, 10vw, 144px); }
+  article { max-width: 44rem; }
+  .when { color: var(--dim); font-size: .95rem; font-variant-numeric: tabular-nums; }
+  .draft { color: var(--sub); }
+  h1 { margin-top: 12px; font-stretch: 108%; font-weight: 620; font-size: clamp(2rem, 1.4rem + 2.4vw, 3.2rem); line-height: 1.06; letter-spacing: -.03em; }
+  .standfirst { margin-top: 18px; font-size: 1.22rem; line-height: 1.45; color: var(--soft); max-width: 36rem; }
+  footer { margin-top: 56px; padding-top: 20px; border-top: 1px solid var(--rule); font-weight: 600; }
+  footer a { color: var(--accent); }
+
+  .prose { margin-top: clamp(32px, 4vw, 52px); font-size: 1.125rem; line-height: 1.68; color: var(--soft); }
+  .prose :global(p), .prose :global(ul), .prose :global(ol), .prose :global(pre), .prose :global(blockquote) { margin: 0 0 1.25em; }
+  .prose :global(h2) { margin: 2em 0 .6em; font-weight: 650; font-size: 1.5rem; line-height: 1.2; letter-spacing: -.02em; color: var(--text); }
+  .prose :global(h3) { margin: 1.7em 0 .5em; font-weight: 700; font-size: 1.2rem; color: var(--text); }
+  .prose :global(ul) { list-style: disc; padding-left: 1.3em; }
+  .prose :global(ol) { list-style: decimal; padding-left: 1.4em; }
+  .prose :global(li) { margin-bottom: .4em; }
+  .prose :global(li::marker) { color: var(--accent); }
+  .prose :global(a) { color: var(--text); text-decoration-color: var(--accent); }
+  .prose :global(strong) { color: var(--text); font-weight: 650; }
+  .prose :global(code) { font: .9em/1.5 ui-monospace, 'Cascadia Code', Menlo, Consolas, monospace; padding: .12em .36em; border-radius: 3px; background: var(--raise); color: var(--text); }
+  .prose :global(pre) { padding: 16px 18px; border-radius: 4px; border: 1px solid var(--rule); background: var(--raise) !important; overflow-x: auto; font-size: .92rem; line-height: 1.55; }
+  .prose :global(pre code) { padding: 0; background: none; font-size: inherit; }
+  .prose :global(blockquote) { padding-left: 1.1em; font-style: italic; color: var(--text); }
+  .prose :global(hr) { margin: 2.4em 0; border: 0; border-top: 1px solid var(--rule); }
+  .prose :global(img) { border-radius: 3px; }
+</style>

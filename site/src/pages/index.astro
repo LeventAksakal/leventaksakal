@@ -1,0 +1,162 @@
+---
+import { Image } from 'astro:assets';
+import { getCollection } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import Hero from '../components/Hero.astro';
+import Entry from '../components/Entry.astro';
+import ShelfList from '../components/ShelfList.astro';
+import { site, industry, research, education, also } from '../data/site';
+import shelf from '../data/shelf.json';
+import portrait from '../assets/photos/avatar.jpg';
+
+const posts = (await getCollection('writing', (p) => import.meta.env.DEV || !p.data.draft))
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
+  .slice(0, 4);
+const day = (d: Date) => d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+
+const films = shelf.films.map((f: any) => ({ slug: f.slug, title: f.title, note: f.note, href: f.href, line: `${f.year} · ${f.rating}/10` }));
+const games = shelf.games.map((g) => ({ slug: g.slug, title: g.title, href: g.href, line: String(g.year) }));
+const listen = (a: { by: string; title: string }) => `https://music.youtube.com/search?q=${encodeURIComponent(`${a.by === 'Soundtrack' ? '' : a.by} ${a.title}`.trim())}`;
+const albums = shelf.albums.map((a) => ({ slug: a.slug, title: a.title, href: listen(a), line: a.by }));
+---
+<Base home>
+  <Hero />
+  <main>
+    <div class="wrap work">
+      <section id="industry" aria-labelledby="h-industry">
+        <h2 class="display" id="h-industry">Industry</h2>
+        {industry.map((e) => <Entry entry={e} />)}
+      </section>
+      <div>
+        <section id="research" aria-labelledby="h-research">
+          <h2 class="display" id="h-research">Research</h2>
+          {research.map((e) => <Entry entry={e} />)}
+        </section>
+        <section id="education" aria-labelledby="h-education">
+          <h2 class="display" id="h-education">Education</h2>
+          {education.map((e) => <Entry entry={e} />)}
+        </section>
+      </div>
+    </div>
+
+    <section class="wrap projects" id="projects" aria-labelledby="h-projects">
+      <h2 class="display" id="h-projects">Projects</h2>
+      <div class="three">{also.map((e) => <Entry entry={e} stacked />)}</div>
+    </section>
+
+    <section class="shelf" id="shelf" aria-labelledby="h-shelf">
+      <div class="wrap">
+        <div class="lede">
+          <h2 class="display" id="h-shelf">Shelf</h2>
+          <p>Films, games and albums I rate highly. Each row opens the work itself. The quoted lines are my own notes.</p>
+        </div>
+        <div class="columns">
+          <ShelfList title="Films and series" count={`${films.length} of about 160`} goes="Wikipedia" items={films} />
+          <ShelfList title="Games" count={`${games.length} of about 120`} goes="Steam" items={games} />
+          <ShelfList title="Music" count={`${albums.length} albums`} goes="YouTube Music" items={albums} square />
+        </div>
+      </div>
+    </section>
+
+    <section class="wrap writing" id="writing" aria-labelledby="h-writing">
+      <h2 class="display" id="h-writing">Writing</h2>
+      {posts.length === 0 ? (
+        <p class="empty">Nothing published yet. Posts will appear here and in the <a href="/rss.xml">RSS feed</a>.</p>
+      ) : (
+        <ol class="posts">
+          {posts.map((p) => (
+            <li>
+              <time datetime={p.data.date.toISOString()}>{day(p.data.date)}</time>
+              <a class="title" href={`/writing/${p.id}/`}>{p.data.title}</a>
+              <p>{p.data.draft && <span class="draft">Draft, shown in dev only. </span>}{p.data.description}</p>
+            </li>
+          ))}
+        </ol>
+      )}
+      {posts.length > 0 && <a class="more" href="/writing/">All writing</a>}
+    </section>
+
+    <section class="wrap contact" id="contact" aria-labelledby="h-contact">
+      <figure class="portrait">
+        <Image src={portrait} alt="Levent Aksakal on a forest track below a rocky peak, with a backpack and a walking stick" width={440} densities={[1, 2]} quality={82} loading="lazy" />
+      </figure>
+      <div class="reach">
+        <h2 class="display" id="h-contact">Contact</h2>
+        <a class="mail" href={`mailto:${site.email}`}>{site.email}</a>
+        <ul class="links">
+          <li>
+            <a href={site.github.href} rel="me noopener">
+              <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z" /></svg>
+              <span><b>GitHub</b>{site.github.handle}</span>
+            </a>
+          </li>
+          <li>
+            <a href={site.linkedin.href} rel="me noopener">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" /></svg>
+              <span><b>LinkedIn</b>{site.linkedin.handle}</span>
+            </a>
+          </li>
+        </ul>
+        <p class="away">{site.away}</p>
+      </div>
+    </section>
+  </main>
+</Base>
+
+<style>
+  section { scroll-margin-top: 8px; }
+  h2 { font-size: clamp(1.9rem, 1.4rem + 1.9vw, 3rem); margin-bottom: clamp(16px, 2vw, 26px); }
+
+  .work { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: clamp(36px, 5.5vw, 96px); padding-top: clamp(64px, 8vw, 120px); }
+  #education { margin-top: clamp(48px, 5vw, 72px); }
+
+  .projects, .shelf, .writing, .contact { margin-top: clamp(80px, 10vw, 152px); }
+  /* Each project spans three shared rows (card, heading, text), so a heading that wraps moves
+     its whole row, never one column out of line. */
+  .three { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 clamp(22px, 3vw, 44px); padding-top: 6px; }
+
+  .lede { margin-bottom: clamp(26px, 3.2vw, 44px); }
+  .lede h2 { margin-bottom: 10px; }
+  .lede p { color: var(--dim); max-width: 60ch; }
+  .columns { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: start; gap: clamp(40px, 5vw, 56px) clamp(28px, 3.6vw, 60px); }
+
+  .empty { color: var(--soft); max-width: 60ch; padding-top: 20px; border-top: 1px solid var(--rule); }
+  .posts li { display: grid; grid-template-columns: 8.5rem minmax(0, 1fr); gap: 4px 24px; padding: 20px 0; border-top: 1px solid var(--rule); }
+  .posts time { color: var(--dim); font-size: .94rem; font-variant-numeric: tabular-nums; padding-top: .3em; }
+  .posts .title { font-weight: 650; font-size: 1.32rem; line-height: 1.2; letter-spacing: -.018em; text-decoration: none; }
+  .posts p { grid-column: 2; color: var(--soft); max-width: 62ch; }
+  .draft { color: var(--sub); }
+  .more { display: inline-block; margin-top: 18px; font-weight: 600; color: var(--accent); }
+
+  .contact { display: grid; grid-template-columns: clamp(200px, 23vw, 310px) minmax(0, 1fr); gap: clamp(28px, 5vw, 80px); align-items: center; padding-bottom: clamp(72px, 9vw, 128px); }
+  /* The portrait keeps its own ratio: the peak behind is the point of the picture. */
+  .portrait { margin: 0; border-radius: 3px; overflow: hidden; box-shadow: 0 30px 60px -30px rgb(0 0 0 / .9); }
+  .portrait :global(img) { width: 100%; height: auto; }
+  .mail { display: inline-block; font-stretch: 108%; font-weight: 620; font-size: clamp(1.25rem, .7rem + 2.3vw, 2.7rem); letter-spacing: -.03em; line-height: 1.05; text-decoration: none; overflow-wrap: anywhere; }
+  .links { display: flex; flex-wrap: wrap; gap: 12px 14px; margin-top: clamp(22px, 2.6vw, 34px); }
+  .links a { display: flex; align-items: center; gap: 14px; padding: 12px 20px 12px 14px; border: 1px solid var(--rule); border-radius: 999px; text-decoration: none; transition: border-color .25s ease, background-color .25s ease, color .25s ease; }
+  .links a:hover { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 9%, transparent); color: var(--text); }
+  .links svg { width: 26px; height: 26px; fill: currentColor; flex: none; transition: fill .25s ease; }
+  .links a:hover svg { fill: var(--accent); }
+  .links span { display: grid; line-height: 1.2; font-size: .95rem; color: var(--dim); }
+  .links b { font-weight: 600; font-size: 1rem; color: var(--text); }
+  .away { margin-top: clamp(22px, 2.6vw, 34px); color: var(--dim); max-width: 48ch; }
+
+  @media (max-width: 1100px) and (min-width: 761px) {
+    .three { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 860px) {
+    .columns { grid-template-columns: minmax(0, 1fr); }
+  }
+  @media (max-width: 980px) {
+    .work { grid-template-columns: minmax(0, 1fr); }
+    #research { margin-top: clamp(56px, 9vw, 96px); }
+  }
+  @media (max-width: 760px) {
+    .three { grid-template-columns: minmax(0, 1fr); gap: 0; padding-top: 0; }
+    .contact { grid-template-columns: minmax(0, 1fr); align-items: start; }
+    .portrait { max-width: 240px; }
+    .posts li { grid-template-columns: minmax(0, 1fr); }
+    .posts p { grid-column: 1; }
+  }
+</style>

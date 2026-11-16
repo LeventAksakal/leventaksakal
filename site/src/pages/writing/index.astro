@@ -1,0 +1,41 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+
+const posts = (await getCollection('writing', (p) => import.meta.env.DEV || !p.data.draft))
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+const day = (d: Date) => d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+---
+<Base title="Writing" description="Notes on problems I ran into and ideas I want to keep.">
+  <main class="wrap">
+    <h1 class="display">Writing</h1>
+    {posts.length === 0 ? (
+      <p class="empty">Nothing published yet. Posts will appear here and in the <a href="/rss.xml">RSS feed</a>.</p>
+    ) : (
+      <ol>
+        {posts.map((p) => (
+          <li>
+            <time datetime={p.data.date.toISOString()}>{day(p.data.date)}</time>
+            <a class="title" href={`/writing/${p.id}/`}>{p.data.title}</a>
+            <p>{p.data.draft && <span class="draft">Draft, shown in dev only. </span>}{p.data.description}</p>
+          </li>
+        ))}
+      </ol>
+    )}
+  </main>
+</Base>
+
+<style>
+  main { padding-top: clamp(40px, 6vw, 88px); padding-bottom: clamp(80px, 10vw, 144px); min-height: 70svh; }
+  h1 { font-size: clamp(2.2rem, 1.5rem + 2.6vw, 3.6rem); margin-bottom: clamp(22px, 3vw, 40px); }
+  .empty { color: var(--soft); max-width: 60ch; padding-top: 20px; border-top: 1px solid var(--rule); }
+  li { display: grid; grid-template-columns: 8.5rem minmax(0, 1fr); gap: 4px 24px; padding: 22px 0; border-top: 1px solid var(--rule); }
+  time { color: var(--dim); font-size: .94rem; font-variant-numeric: tabular-nums; padding-top: .35em; }
+  .title { font-weight: 650; font-size: 1.4rem; line-height: 1.2; letter-spacing: -.018em; text-decoration: none; }
+  li p { grid-column: 2; color: var(--soft); max-width: 62ch; }
+  .draft { color: var(--sub); }
+  @media (max-width: 640px) {
+    li { grid-template-columns: minmax(0, 1fr); }
+    li p { grid-column: 1; }
+  }
+</style>

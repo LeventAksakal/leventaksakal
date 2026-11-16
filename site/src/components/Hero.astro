@@ -1,0 +1,253 @@
+---
+// The opening frame: the six panoramas at their own 2.11:1 ratio, one per screen, on a ground
+// lit by the photograph itself. No text on the photographs; who this is sits in the top bar.
+import { Picture, getImage } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+import Bar from './Bar.astro';
+import { photos, site } from '../data/site';
+
+const files = import.meta.glob<{ default: ImageMetadata }>('../assets/photos/*.jpg', { eager: true });
+const slides = await Promise.all(
+  photos.map(async (p) => {
+    const src = files[`../assets/photos/${p.id}.jpg`].default;
+    const glow = await getImage({ src, width: 64, format: 'webp', quality: 50 });
+    return { ...p, src, glow: glow.src };
+  }),
+);
+---
+<div class="opening" data-hero data-auto="off">
+  <div class="glow" aria-hidden="true">
+    {slides.map((s, i) => <img src={s.glow} alt="" class:list={{ on: i === 0 }} decoding="async" />)}
+  </div>
+
+  <Bar home />
+
+  <section class="stage" aria-roledescription="carousel" aria-label="Photographs">
+    <div class="track" data-track tabindex="0">
+      {slides.map((s, i) => (
+        <figure class="slide" data-id={s.id} data-bg={s.bg} data-accent={s.accent} data-caption={`${s.place}, ${s.when}`} aria-roledescription="slide" aria-label={`${i + 1} of ${slides.length}: ${s.place}, ${s.when}`}>
+          <Picture
+            src={s.src}
+            formats={['avif', 'webp']}
+            widths={[720, 1280, 1920, 2800]}
+            sizes="100vw"
+            alt={s.alt}
+            loading={i === 0 ? 'eager' : 'lazy'}
+            fetchpriority={i === 0 ? 'high' : 'auto'}
+            decoding={i === 0 ? 'sync' : 'async'}
+            style={`object-position: ${s.focus}`}
+          />
+        </figure>
+      ))}
+    </div>
+
+    <h1 class="sr">{site.name}. Software engineer in Istanbul, MSc student at Boğaziçi University.</h1>
+
+    <button class="arrow prev" type="button" data-prev aria-label="Previous photograph">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 5 7.5 12l7 7" /></svg>
+    </button>
+    <button class="arrow next" type="button" data-next aria-label="Next photograph">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9.5 5 7 7-7 7" /></svg>
+    </button>
+  </section>
+
+  <div class="reel">
+    <p class="caption" data-caption>{slides[0].place}, {slides[0].when}</p>
+    <div class="ticks">
+      {slides.map((s, i) => (
+        <button class="tick" type="button" data-tick aria-label={`Show ${s.place}`} aria-current={i === 0 ? 'true' : 'false'}><i></i></button>
+      ))}
+    </div>
+    <div class="right">
+      <button class="pause" type="button" data-pause aria-label="Pause the slideshow" aria-pressed="false">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path class="p1" d="M4.5 3v10M11.5 3v10" /><path class="p2" d="M5 3v10l8-5z" /></svg>
+      </button>
+      <span class="count"><b data-count>1</b> / {slides.length}</span>
+    </div>
+  </div>
+</div>
+
+<style>
+  .opening { position: relative; isolation: isolate; display: grid; grid-template-rows: auto 1fr auto; min-height: 100svh; overflow: clip; }
+
+  /* Ambient light: a tiny copy of the photograph, blurred until only its colours are left. */
+  .glow { position: absolute; inset: -6% -6% 0; z-index: -1; filter: blur(70px) saturate(1.8); opacity: .5; -webkit-mask-image: linear-gradient(to bottom, #000 50%, transparent 96%); mask-image: linear-gradient(to bottom, #000 50%, transparent 96%); pointer-events: none; }
+  .glow img { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; object-fit: cover; opacity: 0; transition: opacity 1.2s ease; }
+  .glow img.on { opacity: 1; }
+
+  .stage { position: relative; align-self: center; justify-self: center; width: min(100%, calc((100svh - 150px) * 2.11)); background: #000; box-shadow: 0 40px 90px -40px rgb(0 0 0 / .9); }
+  .track { display: flex; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scrollbar-width: none; transition: opacity .22s ease; }
+  .track::-webkit-scrollbar { display: none; }
+  .track.cut { opacity: 0; }
+  .track:focus-visible { outline-offset: -4px; }
+  .slide { flex: 0 0 100%; margin: 0; scroll-snap-align: center; scroll-snap-stop: always; }
+  .slide :global(img) { width: 100%; height: auto; aspect-ratio: 2.11; object-fit: cover; }
+
+  .arrow { top: 50%; margin-top: -26px; }
+  .arrow.prev { left: clamp(8px, 1.8vw, 26px); }
+  .arrow.next { right: clamp(8px, 1.8vw, 26px); }
+
+  .reel { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px; padding: 12px var(--gutter) 16px; font-size: .92rem; color: var(--soft); font-variant-numeric: tabular-nums; }
+  .right { display: flex; justify-content: flex-end; align-items: center; gap: 14px; }
+  .count b { font-weight: 600; color: var(--text); }
+
+  .ticks { display: flex; gap: 6px; }
+  .tick { position: relative; width: clamp(20px, 3.4vw, 44px); height: 28px; padding: 0; border: 0; background: none; cursor: pointer; }
+  .tick::before, .tick i { content: ''; position: absolute; left: 0; right: 0; top: 13px; height: 2px; border-radius: 2px; }
+  .tick::before { background: color-mix(in srgb, var(--text) 26%, transparent); transition: background-color .2s ease; }
+  .tick:hover::before { background: color-mix(in srgb, var(--text) 55%, transparent); }
+  .tick i { background: var(--accent); transform: scaleX(0); transform-origin: left; }
+  .tick[aria-current='true'] i { transform: scaleX(1); }
+  /* While the slideshow runs, the current tick fills up; its end is what turns the page. */
+  .opening[data-auto='on'] .tick[aria-current='true'] i { animation: fill 7s linear forwards; }
+  .opening:has(.stage:hover) .tick i, .opening:has(.stage:focus-within) .tick i { animation-play-state: paused; }
+  @keyframes fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+  .pause { display: grid; place-items: center; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--soft); cursor: pointer; }
+  .pause:hover { color: var(--accent); }
+  .pause svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .pause .p2, .pause[aria-pressed='true'] .p1 { display: none; }
+  .pause[aria-pressed='true'] .p2 { display: block; fill: currentColor; stroke: none; }
+
+  @media (max-width: 720px) {
+    .opening { min-height: 0; }
+    .stage { width: 100%; }
+    .slide :global(img) { aspect-ratio: 5 / 4; }
+    .reel { grid-template-columns: 1fr auto; padding-top: 8px; }
+    .ticks { order: 3; grid-column: 1 / -1; }
+    .tick { flex: 1; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .pause { display: none; }
+  }
+</style>
+
+<script>
+  const root = document.querySelector<HTMLElement>('[data-hero]');
+  if (root) {
+    const track = root.querySelector<HTMLElement>('[data-track]')!;
+    const slides = [...root.querySelectorAll<HTMLElement>('.slide')];
+    const glows = [...root.querySelectorAll<HTMLElement>('.glow img')];
+    const ticks = [...root.querySelectorAll<HTMLButtonElement>('[data-tick]')];
+    const caption = root.querySelector<HTMLElement>('[data-caption]:not(.slide)')!;
+    const count = root.querySelector<HTMLElement>('[data-count]')!;
+    const pause = root.querySelector<HTMLButtonElement>('[data-pause]')!;
+    const theme = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
+    const still = matchMedia('(prefers-reduced-motion: reduce)');
+
+    let index = 0;
+    let wanted = true; // the visitor has not paused or taken over
+    let visible = true;
+
+    const sync = () => {
+      root.dataset.auto = wanted && visible && !still.matches && !document.hidden ? 'on' : 'off';
+      pause.setAttribute('aria-pressed', String(!wanted));
+      pause.setAttribute('aria-label', wanted ? 'Pause the slideshow' : 'Play the slideshow');
+    };
+
+    const show = (i: number) => {
+      index = i;
+      const s = slides[i].dataset;
+      document.documentElement.style.setProperty('--bg', s.bg!);
+      document.documentElement.style.setProperty('--accent', s.accent!);
+      theme?.setAttribute('content', s.bg!);
+      try { sessionStorage.setItem('photo', s.id!); } catch {}
+      glows.forEach((g, k) => g.classList.toggle('on', k === i));
+      ticks.forEach((t, k) => t.setAttribute('aria-current', String(k === i)));
+      caption.textContent = s.caption!;
+      count.textContent = String(i + 1);
+    };
+
+    // The arrows do not rely on the browser's smooth scrolling (it stalls when frames are
+    // scarce): the slide is driven by the clock, and a timer lands it even if no frame is drawn.
+    let gliding = 0;
+    let guard = 0;
+    const land = (left: number) => {
+      cancelAnimationFrame(gliding);
+      clearTimeout(guard);
+      gliding = 0;
+      track.scrollLeft = left;
+      track.style.scrollSnapType = '';
+    };
+    const glide = (left: number) => {
+      land(track.scrollLeft);
+      const from = track.scrollLeft;
+      const t0 = performance.now();
+      const ms = 520;
+      track.style.scrollSnapType = 'none'; // snapping would fight every in-between position
+      const tick = (now: number) => {
+        const k = Math.min(1, (now - t0) / ms);
+        track.scrollLeft = from + (left - from) * (1 - Math.pow(1 - k, 4));
+        if (k < 1) gliding = requestAnimationFrame(tick);
+        else land(left);
+      };
+      gliding = requestAnimationFrame(tick);
+      guard = window.setTimeout(() => land(left), ms + 120);
+    };
+
+    const go = (i: number, smooth = true) => {
+      const n = slides.length;
+      const wrap = i < 0 || i >= n;
+      const target = (i + n) % n;
+      const left = target * track.clientWidth;
+      if (!smooth || still.matches) {
+        land(left);
+      } else if (wrap) {
+        // From the last photograph back to the first: cut, do not rewind through all six.
+        track.classList.add('cut');
+        setTimeout(() => {
+          land(left);
+          track.classList.remove('cut');
+        }, 220);
+      } else {
+        glide(left);
+      }
+      show(target);
+    };
+
+    const takeOver = () => { wanted = false; sync(); };
+
+    // Swipes and trackpad scrolling land here: follow the track once it settles.
+    let settle = 0;
+    track.addEventListener('scroll', () => {
+      clearTimeout(settle);
+      settle = window.setTimeout(() => {
+        if (gliding) return;
+        const i = Math.round(track.scrollLeft / track.clientWidth);
+        if (i !== index && slides[i]) show(i);
+      }, 90);
+    }, { passive: true });
+    track.addEventListener('pointerdown', takeOver);
+    track.addEventListener('touchstart', takeOver, { passive: true });
+    track.addEventListener('wheel', (e) => { if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) takeOver(); }, { passive: true });
+    track.addEventListener('keydown', (e) => {
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+      e.preventDefault();
+      takeOver();
+      go(index + (e.key === 'ArrowRight' ? 1 : -1));
+    });
+
+    root.querySelector('[data-prev]')!.addEventListener('click', () => { takeOver(); go(index - 1); });
+    root.querySelector('[data-next]')!.addEventListener('click', () => { takeOver(); go(index + 1); });
+    ticks.forEach((t, i) => t.addEventListener('click', () => { takeOver(); go(i); }));
+    pause.addEventListener('click', () => { wanted = !wanted; sync(); });
+    root.addEventListener('animationend', (e) => { if (e.animationName.startsWith('fill') || (e.target as HTMLElement).tagName === 'I') go(index + 1); });
+
+    new IntersectionObserver(([entry]) => { visible = entry.intersectionRatio > 0.6; sync(); }, { threshold: [0, 0.6, 1] }).observe(root.querySelector('.stage')!);
+    document.addEventListener('visibilitychange', sync);
+    still.addEventListener('change', sync);
+    addEventListener('resize', () => land(index * track.clientWidth));
+
+    // The other photographs are lazy; fetch them once the page is up so an arrow never lands
+    // on an empty frame.
+    const warm = () => slides.forEach((s) => s.querySelector('img')?.setAttribute('loading', 'eager'));
+    if (document.readyState === 'complete') setTimeout(warm, 600);
+    else addEventListener('load', () => setTimeout(warm, 600), { once: true });
+
+    // Come back to the photograph the visitor last saw in this tab.
+    let start = 0;
+    try { start = Math.max(0, slides.findIndex((s) => s.dataset.id === sessionStorage.getItem('photo'))); } catch {}
+    if (start) go(start, false); else show(0);
+    sync();
+  }
+</script>
