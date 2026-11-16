@@ -33,7 +33,7 @@ A post is one Markdown file. There is no separate app and no admin: write, look,
    it to 1600px wide (the build compresses a post's pictures but does not resize them). Then write
    `![What the picture shows](./img/name.jpg)`.
 4. To publish, delete the `draft: true` line, commit and push to `main`. The post is live about
-   three minutes later: on the home page (the four newest), on `/writing/`, in `/rss.xml` and in
+   a minute later: on the home page (the four newest), on `/writing/`, in `/rss.xml` and in
    the sitemap. A post can also be written in GitHub's web editor, from any machine.
 5. When you change a published post later, add `updated: 2026-12-01` under `date`.
 
@@ -108,11 +108,11 @@ serves leventaksakal.com. If a check fails, nothing is uploaded and the live sit
 
 What is checked depends on what changed:
 
-| The push changes | Checks | Live after about |
+| The push changes | Checks | Live after about (target) |
 | --- | --- | --- |
 | Only files outside `site/` (README, `docs/`, `tickets/`) | none, no deploy | |
-| Only content: posts and their pictures, `shelf.json`, covers, photographs, logos | build, image metadata, internal links | 3 minutes |
-| Anything else under `site/` (pages, components, styles, scripts, `site.ts`, headers, dependencies) | the same, plus type check and Lighthouse budget | 4 minutes |
+| Only content: posts and their pictures, `shelf.json`, covers, photographs, logos | build, image metadata, internal links | 1 minute (3) |
+| Anything else under `site/` (pages, components, styles, scripts, `site.ts`, headers, dependencies) | the same, plus type check and Lighthouse budget | 2.5 minutes (4) |
 
 Content skips the two slow checks because a post or a shelf entry cannot break the layout or the
 scripts. Watch a run with `gh run watch` or under Actions on GitHub; the commit gets a green mark
