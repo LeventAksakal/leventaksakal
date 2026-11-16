@@ -52,7 +52,7 @@ Status values: open, in progress, shipped not measured, done.
 | 43 | "optimize the i11y" (16 Nov 2026) | Lighthouse accessibility 100 and the things it does not test: keyboard order, names, contrast on all six grounds, target sizes. | done, deployed 16 Nov 2026 (commit `bc45c98`): Lighthouse accessibility 100, 57 audits passed, 0 failed. Added a "Skip to content" link; the carousel's controls now live inside the carousel region and follow the photograph in tab order; a status line speaks the photograph only when the visitor changes it, never while the slideshow runs; idle ticks raised from 1.75:1 to 4:1; text contrast is 6.4:1 or better on every ground; Windows high-contrast draws the ticks. Not checked: a real screen reader, Safari, Firefox | Tab through the first screen; Lighthouse |
 | 44 | "tell me how I would go about authoring blogs (a seperate app or just write in md then deploy auto ships as static embed? the README should reflect how I use and update teh site day to day)" (16 Nov 2026) | The README answers "how do I write a post, change a fact, add a photograph, look at it, deploy" in that order, and every command in it works. | done, pushed 16 Nov 2026 (commit `53a2a31`): README rewritten around those tasks; `npm run preview` (build served with production headers) and `npm run strip` (remove image metadata, optional shrink) added and run. Whether a push should deploy is ticket 0001 | Follow the README's "Write a post" from a clean checkout |
 | 45 | "we can enable auto deployment [...] so deploy path is just promotion to main. the CI should be intelligently written. So adding a shelv item or adding a blog vs changing the code are not the subject to same checks obviously" (16 Nov 2026) | A push to `main` is the only deploy. Content (post, shelf, cover, photograph, logo): build, image metadata, links; live within 3 min. Code: also type check and Lighthouse budget; live within 6 min. A change outside `site/` starts nothing. A failed check deploys nothing and names what failed. | done, 16 Nov 2026. He set the token secret; measured on GitHub the same day: a content-only push (a blank line in the draft post) was live 50 s after the push, with type check and budget skipped; a code push was live 2 min 29 s after the push (build with image and link checks 23 s, type check 18 s, Lighthouse budget 86 s reading 98 for the home page, upload 23 s); with a cold image cache the checks take about 30 s longer. Before the token existed the deploy job failed with "Nothing was deployed: the repository secret CLOUDFLARE_API_TOKEN [...] is missing" and the live site stayed as it was. A push that changes nothing under `site/` starts no run. Checked by hand: the classifier on seven file lists; the link check finds a broken link and a broken anchor; the budget fails and names the reason; the commit hook refuses a picture with EXIF. Not seen: a run where a check fails on a real change. `npm run deploy` is removed | Push a post, `gh run watch`; the commit shows a "production" deployment |
-| 46 | "we dont want bots to go into our site. a personal portfolio is made for human-gaze [...] you should enable strcit guards on leventaksakal.com on cloudflare" (16 Nov 2026) | Search engines and link previews pass; AI crawlers, scrapers and scripted clients are refused: `curl` gets 403, a browser gets the page, a pasted link still shows its card. | in progress. Done in the repository and live (uploaded by hand once, 16 Nov 2026, because the pipeline has no token yet): `llms.txt` is deleted and `robots.txt` disallows 24 AI crawlers by name while search engines stay allowed. Not done: every Cloudflare setting. The agent's connection was refused (403, scopes `bot-management.write` and `account-waf.write` not granted), so AI crawlers are still not blocked at the edge and `curl` still gets the page. The settings and the firewall rule are written out in `docs/decisions/0001-bot-guard.md`. Also open: the live `/llms.txt` still answers from a copy stored at Cloudflare's edge and needs a purge (`cache.purge`, not granted either) | The checks listed in `docs/decisions/0001-bot-guard.md` |
+| 46 | "we dont want bots to go into our site. a personal portfolio is made for human-gaze [...] you should enable strcit guards on leventaksakal.com on cloudflare" (16 Nov 2026) | Search engines and link previews pass; AI crawlers, scrapers and scripted clients are refused: `curl` gets 403, a browser gets the page, a pasted link still shows its card. | done, 16 Nov 2026, link previews not seen in the real apps. Repository: `llms.txt` deleted, `robots.txt` disallows 24 AI crawlers by name. Cloudflare (applied through the API after he granted the scopes): AI traffic policies Training, Search and Agent set to block, personal AI agents blocked, AI Labyrinth on, managed robots.txt on, one custom rule against scripted clients. Checked from outside by user agent: browser 200; `curl`, `python-requests`, headless Chrome 403; GPTBot, ClaudeBot, PerplexityBot 403; Facebook, Slack, LinkedIn, WhatsApp, X, Discord and Telegram previews 200; `/rss.xml` 200 for `curl`. The first version of the rule refused LinkedIn's preview fetcher (it calls itself Apache-HttpClient) and was corrected the same hour. Live Lighthouse afterwards: performance 92, accessibility 100, SEO 100, best practices 81 (the accepted price). Open: a link pasted into LinkedIn and WhatsApp for real; `/llms.txt` answers until about 23 Nov 2026 because Pages keeps a removed file for up to a week | The checks listed in `docs/decisions/0001-bot-guard.md` |
 
 ## Content decisions (16 Nov 2026, owner's words paraphrased closely)
 
@@ -68,14 +68,14 @@ Status values: open, in progress, shipped not measured, done.
   Desktop (not copied into the repo yet). He lets me pick a sample that reflects his taste. Books: he
   will list from memory.
 
-## Where work stopped (16 Nov 2026, round 5: deploy on push done, bot guard half done)
+## Where work stopped (16 Nov 2026, round 5 done: deploy on push, bot guard)
 
 leventaksakal.com serves `main` (the only branch), deployed by the workflow `site` on every push.
-Nothing is uncommitted or unpushed. One thing is half done and waits for the owner:
+Nothing is uncommitted or unpushed, and no work is in flight. Rows 45 and 46 are done; what is left
+of them is for the owner to look at (see "Waiting on the owner").
 
-- Bot guard (row 46): the repository part is live; the Cloudflare part is not applied. After he
-  grants the scopes (or does it by hand): apply `docs/decisions/0001-bot-guard.md`, run its checks,
-  and measure the live site again (AI Labyrinth adds hidden links to the pages).
+- The live site refuses scripts: `curl` gets 403. Fetch it with a browser's user agent, or measure
+  the local build (`npm run budget`).
 
 - Run it: `.claude/launch.json` configs `site` (dev, port 4321) and `built` (the build with production
   headers, port 8788), or `npm run dev` / `npm run build` then `npm run preview` in `site/`. Drafts show
@@ -103,7 +103,5 @@ Nothing is uncommitted or unpushed. One thing is half done and waits for the own
 
 ## Waiting on the owner
 
-- Bot guard on Cloudflare (row 46): grant the agent's Cloudflare connection the scopes
-  `bot-management.write`, `account-waf.write` and `cache.purge`, or set the values in
-  `docs/decisions/0001-bot-guard.md` by hand and purge `https://leventaksakal.com/llms.txt`.
+- Paste a link to the site into LinkedIn and WhatsApp once and see that the card appears (row 46).
 - The draft post waits for his two TODO paragraphs (row 6).
