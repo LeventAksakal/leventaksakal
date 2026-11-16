@@ -2,4 +2,4 @@
 # Deploy with `npm run deploy` from this folder. Production is the branch `main`.
 name = "levent-website"
 pages_build_output_dir = "dist"
-compatibility_date = "2026-11-01"
+compatibility_date = "2026-06-01"

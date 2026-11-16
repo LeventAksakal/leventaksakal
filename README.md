@@ -29,11 +29,15 @@ Run from `site/` (Node 22.23 or newer).
 
 Cloudflare Pages project `levent-website`, direct upload. There is no Git integration: pushing to
 GitHub deploys nothing. `npm run deploy` uploads to the production branch `main`, which serves
-leventaksakal.com. Needs a one-time `npx wrangler login`. To look before it is live, upload to any
-other branch name and open the address Wrangler prints:
+leventaksakal.com. Needs a one-time `npx wrangler login`.
+
+To look at a build before it is live, serve it locally under the Pages runtime, which applies
+`_headers` the way production does. The `*.pages.dev` addresses are no use for this: a Cloudflare
+rule redirects them to the live domain.
 
 ```
-npx wrangler pages deploy --branch preview
+npm run build
+npx wrangler pages dev dist
 ```
 
 Response headers (cache, content security policy) are in `site/public/_headers`. `robots.txt`,
