@@ -54,7 +54,7 @@ export const industry: Entry[] = [
     text: 'E-commerce platform for safety products: storefront, admin panel and API on Cloudflare Workers with Supabase. Payments, shipping, e-invoicing, a WhatsApp ordering bot and an MCP checkout so LLM agents can place orders. I do all of it, from talking to the people who run the shop to design, development and testing.',
     href: 'https://temizelisg.com',
     link: 'temizelisg.com',
-    card: { kind: 'logo', src: '/logos/temizel.png', alt: 'Temizel', ground: '#ffffff' },
+    card: { kind: 'logo', src: '/logos/temizel.webp', alt: 'Temizel', ground: '#ffffff' },
   },
   {
     id: 'babytell',
@@ -79,7 +79,7 @@ export const industry: Entry[] = [
     text: 'Mobile test automation with Appium; analysis of Android kernel Ethernet and USB-C drivers.',
     href: 'https://www.sage.tubitak.gov.tr',
     link: 'sage.tubitak.gov.tr',
-    card: { kind: 'logo', src: '/logos/tubitak-sage.png', alt: 'TÜBİTAK SAGE', ground: '#ffffff', fit: 'tall' },
+    card: { kind: 'logo', src: '/logos/tubitak-sage.webp', alt: 'TÜBİTAK SAGE', ground: '#ffffff', fit: 'tall' },
   },
 ];
 

@@ -156,6 +156,7 @@ const slides = await Promise.all(
       ticks.forEach((t, k) => t.setAttribute('aria-current', String(k === i)));
       caption.textContent = s.caption!;
       count.textContent = String(i + 1);
+      warm(i);
     };
 
     // The arrows do not rely on the browser's smooth scrolling (it stalls when frames are
@@ -238,11 +239,14 @@ const slides = await Promise.all(
     still.addEventListener('change', sync);
     addEventListener('resize', () => land(index * track.clientWidth));
 
-    // The other photographs are lazy; fetch them once the page is up so an arrow never lands
-    // on an empty frame.
-    const warm = () => slides.forEach((s) => s.querySelector('img')?.setAttribute('loading', 'eager'));
-    if (document.readyState === 'complete') setTimeout(warm, 600);
-    else addEventListener('load', () => setTimeout(warm, 600), { once: true });
+    // The other photographs are lazy. Once the page is up, fetch the two beside the one on
+    // screen, so an arrow never lands on an empty frame and a phone does not pay for all six.
+    let up = false;
+    const eager = (n: number) => slides[(n + slides.length) % slides.length].querySelector('img')?.setAttribute('loading', 'eager');
+    const warm = (i: number) => { if (up) [i, i + 1, i - 1].forEach(eager); };
+    const ready = () => setTimeout(() => { up = true; warm(index); }, 600);
+    if (document.readyState === 'complete') ready();
+    else addEventListener('load', ready, { once: true });
 
     // Come back to the photograph the visitor last saw in this tab.
     let start = 0;
