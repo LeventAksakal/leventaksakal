@@ -1,0 +1,10 @@
+#!/bin/sh
+# Fast checks on the staged files only; the slow ones (types, Lighthouse) run in CI.
+# Turned on by `npm install` in site/ (its "prepare" script points git at this folder).
+#
+# Images: the repository is public and so is its history, so a picture must lose its EXIF, XMP
+# and IPTC (camera, time, GPS position) before it is committed, not after.
+images=$(git diff --cached --name-only --diff-filter=ACM -- site | grep -Ei '\.(jpe?g|png|webp|avif|tiff?|heic)$' | sed 's|^site/||')
+[ -z "$images" ] && exit 0
+cd "$(git rev-parse --show-toplevel)/site" || exit 1
+printf '%s\n' "$images" | xargs -d '\n' node scripts/strip.mjs --check
