@@ -29,3 +29,4 @@ TODO (Levent): what you recovered, from where, and what was lost.
 3. Before removing a worktree, look for links: `dir /AL /S <worktree>`.
 4. Git 2.56 or later.
 5. A hook that refuses the delete when a link is present, because rules 1 to 3 depend on remembering them.
+
