@@ -21,7 +21,7 @@ const albums = shelf.albums.map((a) => ({ slug: a.slug, title: a.title, href: li
 ---
 <Base home>
   <Hero />
-  <main>
+  <main id="main">
     <div class="wrap work">
       <section id="industry" aria-labelledby="h-industry">
         <h2 class="display" id="h-industry">Industry</h2>
@@ -111,6 +111,15 @@ const albums = shelf.albums.map((a) => ({ slug: a.slug, title: a.title, href: li
   #education { margin-top: clamp(48px, 5vw, 72px); }
 
   .projects, .shelf, .writing, .contact { margin-top: clamp(80px, 10vw, 152px); }
+  /* Far below the first screen: the browser lays these out only as they come near, which
+     takes layout work off the first paint. The sizes are the measured content heights, so
+     the scrollbar and the jumps from the top bar land true; once a section has been drawn
+     the browser remembers its real height (`auto`). After adding or removing a project or
+     many shelf rows, measure again: a stale number only makes a jump land a little off. */
+  .projects, .shelf, .contact { content-visibility: auto; }
+  .projects { contain-intrinsic-block-size: auto 1175px; }
+  .shelf { contain-intrinsic-block-size: auto 2470px; }
+  .contact { contain-intrinsic-block-size: auto min(655px, calc(36vw + 135px)); }
   /* Each project spans three shared rows (card, heading, text), so a heading that wraps moves
      its whole row, never one column out of line. */
   .three { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 clamp(22px, 3vw, 44px); padding-top: 6px; }
@@ -144,9 +153,11 @@ const albums = shelf.albums.map((a) => ({ slug: a.slug, title: a.title, href: li
 
   @media (max-width: 1100px) and (min-width: 761px) {
     .three { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .projects { contain-intrinsic-block-size: auto 1600px; }
   }
   @media (max-width: 860px) {
     .columns { grid-template-columns: minmax(0, 1fr); }
+    .shelf { contain-intrinsic-block-size: auto 2680px; }
   }
   @media (max-width: 980px) {
     .work { grid-template-columns: minmax(0, 1fr); }
@@ -155,8 +166,13 @@ const albums = shelf.albums.map((a) => ({ slug: a.slug, title: a.title, href: li
   @media (max-width: 760px) {
     .three { grid-template-columns: minmax(0, 1fr); gap: 0; padding-top: 0; }
     .contact { grid-template-columns: minmax(0, 1fr); align-items: start; }
+    .contact { contain-intrinsic-block-size: auto 810px; }
+    .projects { contain-intrinsic-block-size: auto 3200px; }
     .portrait { max-width: 240px; }
     .posts li { grid-template-columns: minmax(0, 1fr); }
     .posts p { grid-column: 1; }
+  }
+  @media (max-width: 560px) {
+    .projects { contain-intrinsic-block-size: auto 1540px; }
   }
 </style>

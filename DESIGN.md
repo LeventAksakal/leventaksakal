@@ -12,7 +12,8 @@ Everything else is type, real logos and real cover art. Nothing is illustrated o
 
 ## Rules
 
-- One family: Archivo Variable (self-hosted, width axis). Display voice is width 108%, weight 620,
+- One family: Archivo (self-hosted variable font with a width axis, cut by `npm run font` to
+  weights 400 to 700 and widths 100 to 110: stay inside those). Display voice is width 108%, weight 620,
   sentence case, tight tracking, at most 3rem for section headings. The condensed heavy upper case
   of round 1 "felt off" to the owner (16 Nov 2026): do not bring it back. Body is width 100%,
   1.0625rem. No second text family.
@@ -24,7 +25,9 @@ Everything else is type, real logos and real cover art. Nothing is illustrated o
   yellow `#f6dc6b` is fixed and used only for draft marks and the owner's quoted
   notes. Body text contrast stays above 4.5:1 on every ground.
 - Photographs: shown sharp at 2.11:1, never as a blurred background behind content. The only blur
-  is the ambient light around the frame, which is a 64px copy of the same photograph.
+  is the ambient light around the frame, which is a 96px copy of the same photograph blurred at
+  build time (`src/lib/glow.ts`). No CSS `filter: blur()` or `backdrop-filter` on the first screen:
+  the first one cost a phone a third of a second of rendering.
 - Names of universities, companies and projects come with their real logo or wordmark on a 16:9
   title card with the brand's own ground. No logo exists: the card is set in type (the
   research project by its name, me2exp; repositories as their GitHub path). BabyTell's card is its
@@ -33,10 +36,13 @@ Everything else is type, real logos and real cover art. Nothing is illustrated o
   width alone outgrows a 16:9 card and gets cut (the MOQtail glass in round 1).
 - Everything that has a public address is a link: employers, universities, projects, and every
   film (Wikipedia), game (Steam) and album (YouTube Music search) on the shelf.
-- The hero is the only horizontal scroller. Its scrollbar is hidden; round, half-transparent
-  arrows move one photograph. The arrows animate by the clock with a timer that lands the slide,
-  not with the browser's smooth scrolling, which stalled in the owner's browser. The hero never
-  takes the wheel.
+- The hero is the only horizontal scroller. Its scrollbar is hidden; round arrows move one
+  photograph. Nothing sits on a photograph (owner, 16 Nov 2026: the arrows "could live outside of
+  the image itself"): the arrows flank the progress ticks underneath, on one row with the caption
+  and the count on a desktop, on a row of their own below 980px. The caption stays on one line, so
+  that row never changes height between photographs. The arrows animate by the clock with a timer
+  that lands the slide, not with the browser's smooth scrolling, which stalled in the owner's
+  browser. The hero never takes the wheel.
 - The shelf is three plain lists side by side (films, games, music), cover on the left, rows as
   tall as their content, columns of unequal length. The horizontal rows of round 1 were dropped at
   the owner's request. On a phone each list shows seven rows and a "Show all". Each list is headed

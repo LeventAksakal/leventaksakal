@@ -7,7 +7,7 @@ const posts = (await getCollection('writing', (p) => import.meta.env.DEV || !p.d
 const day = (d: Date) => d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 ---
 <Base title="Writing" description="Notes on problems I ran into and ideas I want to keep.">
-  <main class="wrap">
+  <main class="wrap" id="main">
     <h1 class="display">Writing</h1>
     {posts.length === 0 ? (
       <p class="empty">Nothing published yet. Posts will appear here and in the <a href="/rss.xml">RSS feed</a>.</p>

@@ -11,7 +11,7 @@ const { Content } = await render(post);
 const day = (d: Date) => d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
 ---
 <Base title={post.data.title} description={post.data.description}>
-  <main class="wrap">
+  <main class="wrap" id="main">
     <article>
       <header>
         <p class="when">

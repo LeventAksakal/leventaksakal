@@ -8,16 +8,21 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
-    "preview": "astro preview",
-    "astro": "astro",
+    "preview": "npx --yes wrangler@4 pages dev dist --port 8788 --ip 127.0.0.1",
+    "deploy": "astro build && npx --yes wrangler@4 pages deploy --branch main",
     "covers": "node scripts/covers.mjs",
-    "deploy": "astro build && npx --yes wrangler@4 pages deploy --branch main"
+    "font": "node scripts/font.mjs",
+    "strip": "node scripts/strip.mjs",
+    "astro": "astro"
   },
   "dependencies": {
     "@astrojs/rss": "^4.0.19",
     "@astrojs/sitemap": "^3.7.5",
-    "@fontsource-variable/archivo": "^5.3.0",
     "astro": "^7.4.12",
     "sharp": "^0.35.5"
+  },
+  "devDependencies": {
+    "@fontsource-variable/archivo": "^5.3.0",
+    "subset-font": "^2.9.0"
   }
 }
