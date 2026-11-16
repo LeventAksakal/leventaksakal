@@ -28,7 +28,7 @@ Status values: open, in progress, shipped not measured, done.
 | 19 | "for MOQtail I'm no longer a maintainer I just contributed and designed authored at that time ACK that or phrase it properly" (16 Nov 2026) | MOQtail reads as a past contribution. | shipped, not reviewed: "Contributor · Open source · 2025 ... I am no longer a maintainer." | Research section |
 | 20 | "temizellogo.png is old and dead, text "Temizel" is the logo. you can also link my linkedin and github accounts; (use their svg icons too)" (16 Nov 2026) | The Temizel card shows the yellow wordmark; GitHub and LinkedIn are linked with their icons. | shipped, not reviewed | Work and Contact sections |
 | 21 | "the bold titles like my name or INDUSTRY, RESAERCh felt off to me"; "the text body reads fine" (16 Nov 2026, round 2) | Headings and the name are no longer condensed heavy upper case; body text unchanged. | shipped, not reviewed: Archivo at width 108%, weight 620, sentence case | Top bar and section headings |
-| 22 | "the favcion is gargabe just use a Text "L" with nice colorplay" (16 Nov 2026) | Favicon is a letter L with a colour gradient. | shipped, not reviewed: `site/public/favicon.svg`, `.ico`, `apple-touch-icon.png` | Browser tab |
+| 22 | "the favcion is gargabe just use a Text "L" with nice colorplay" (16 Nov 2026) | Favicon is a letter L with a colour gradient. | superseded by row 33 (the gradient was rejected): `site/public/favicon.svg`, `.ico`, `apple-touch-icon.png` | Browser tab |
 | 23 | "text in carousel is stupid. have that SWE in Istanbul, MSc at Boun next to my name at the top nav bar in a slick way" (16 Nov 2026) | No text on the photographs; role and school sit beside the name in the top bar. | shipped, not reviewed: "Software engineer in Istanbul / MSc at [seal] Boğaziçi" | Top bar on desktop and phone |
 | 24 | "my photo cropped is stupid it should be the original raito with the mountain behind thats the whole point" (16 Nov 2026) | The portrait is shown whole. | shipped, not reviewed | Contact section |
 | 25 | "horizantal scroll chevrons doesnt work on click. they should move to end on click" (16 Nov 2026) | A click on an arrow always moves the carousel. | shipped, measured: six clicks move six photographs in a headless run and in the app's browser pane; cause was reliance on the browser's smooth scrolling. "Move to end" applied to the shelf rows, which are gone (row 27) | Click the hero arrows |
@@ -38,6 +38,16 @@ Status values: open, in progress, shipped not measured, done.
 | 29 | "the showcased projects could be increased. like clerance is an original and neat idea" (16 Nov 2026) | More projects, Clearance among them. | shipped, not reviewed: six projects (Clearance, Talk Tracks, WebTransport stall, Notification system, Quinn congestion control, Time Analytics); Veil and other private repos left out | Projects section |
 | 30 | "maybe add redirects to companies, movies games etc" (16 Nov 2026) | Everything with a public address links to it. | shipped, measured: 48 of 48 shelf rows link (Wikipedia, Steam, YouTube Music search), 12 title cards link; APS and BabyTell have no public address | Click through |
 | 31 | "Away from the keyboard: playing the guitar, climbing, mountaineering and cooking." (16 Nov 2026) | That exact sentence. | done | Contact section |
+| 32 | "on shelf film and series desc. text spans 2 lines so layout shifts bcuz of that. I dont want to see layout breaks and mishaps like that" (16 Nov 2026, round 3) | The three shelf lists start on one line at every width; nothing shifts a neighbour out of line. | done, measured on the built site at 1920, 1440, 1180, 1000, 861 and 390px: the three headers are 60.6px tall, the lists start at the same height, no text is cut, no horizontal overflow. Project rows now share their rows (subgrid): 0 misaligned rows | Shelf and Projects sections at any width |
+| 33 | "favicon radient and color is straight up AI slop dont fall into that hole" (16 Nov 2026) | A flat favicon, no gradient. | shipped, not reviewed: letter L, cream stem and blue foot on the dark ground (`site/public/favicon.svg`, `.ico`, touch icon, 192 and 512px icons) | Browser tab |
+| 34 | "Çay, June 2024 is Köprülü Kanyon, Denizli June 2024 is Pamukkale antik kenti" (16 Nov 2026) | Captions name the right places. | done: "Köprülü Kanyon, June 2024" and "Pamukkale ancient city, June 2024", alt texts too | Hero captions, photographs 3 and 6 |
+| 35 | "use white BG for temizel its what the official site uses" (16 Nov 2026) | Temizel card on white. | done | Industry section |
+| 36 | "makesure to idiomatically setup robots.txt llms.txt and other stuff" (16 Nov 2026) | Crawler and host files exist, are correct and cannot drift from the pages. | done, measured on leventaksakal.com: `robots.txt`, `llms.txt`, `site.webmanifest`, `sitemap-index.xml`, `rss.xml` return 200 with the right content type and are generated from `site/src/data/site.ts`; `_headers` sets a content security policy, frame and referrer rules, and a one-year immutable cache for `/_astro/`; unknown paths return 404 | `curl -I https://leventaksakal.com/robots.txt` and the others |
+| 37 | "Then ship it" (16 Nov 2026) | The new site is what leventaksakal.com serves. | done, measured 16 Nov 2026: production deploy of `main`; in a headless browser 72 of 72 images load, no console error, no failed request. Lighthouse on a phone profile: accessibility 100, SEO 100, layout shift 0 | Open leventaksakal.com |
+| 38 | "prune every other branch; stale reworks experiments etc" (16 Nov 2026) | Only `main` remains; no stale code in the tree. | done except `admin/`: local and remote branches `v3`, `v4`, `redesign`, `pinboard-prototype`, `claude/wizardly-archimedes-3xochp` and one stash deleted; the paint-intro app, `website/`, `docs/v3/`, `prototypes/`, old `node_modules` and `.wrangler` removed. All of it is kept in one file, `.git/pre-v4-2026-11-16.bundle`. The untracked folder `admin/` (build output and a `.dev.vars`) is still on disk: deleting it was blocked by the permission check | `git branch -a`; `git bundle list-heads .git/pre-v4-2026-11-16.bundle` |
+| 39 | "babytell I'm a partner its not my own product. idea belongs to a friend of mine and you can find the actual logo from the kotlin build assets" (16 Nov 2026) | BabyTell says partner and shows its real logo. | done: meta "Partner", text "A friend's idea that I joined as a partner", card is the crescent mark and wordmark converted from the Android app's vector drawables | Industry section |
+| 40 | "Also SWE in Istanbul read more slick no? since flipside is MSc?" (16 Nov 2026) | Top bar reads "SWE in Istanbul / MSc at Boğaziçi". | done; page title, description and the screen-reader heading still spell out "Software engineer" | Top bar |
+| 41 | Mine, not the owner's (16 Nov 2026): the first deploy scored 69 for performance on Lighthouse's phone profile | Phone profile: performance 90 or more, largest contentful paint 2.5 s or less. | open. Measured twice on a loaded machine (benchmark index 856, so the numbers are pessimistic): 69 then 70; LCP 4.1 s then 3.9 s; page weight 1002 KiB then 667 KiB after inlining the stylesheets, loading only neighbouring photographs and shrinking three logos. What is left is main-thread time: about 0.5 s is Cloudflare's own bot-detection script (`/cdn-cgi/challenge-platform/.../jsd/main.js`, a zone setting, also the cause of best practices 79), about 0.8 s is one unattributed task around first paint (suspect: the 70px blur of the light behind the hero) | Run Lighthouse or PageSpeed Insights on leventaksakal.com, phone profile |
 
 ## Content decisions (16 Nov 2026, owner's words paraphrased closely)
 
@@ -53,30 +63,42 @@ Status values: open, in progress, shipped not measured, done.
   Desktop (not copied into the repo yet). He lets me pick a sample that reflects his taste. Books: he
   will list from memory.
 
-## Where work stopped (16 Nov 2026, evening)
+## Where work stopped (16 Nov 2026, shipped)
 
-The final site is in `site/` (Astro 7, static) on branch `v4`, cut from `v3` at `d9e70f0`. Nothing is
-committed, pushed or deployed. `leventaksakal.com` still serves the 2025 site.
+The site is live at leventaksakal.com from branch `main` (the only branch). Source is `site/` (Astro 7,
+static); the repo root holds the README, `DESIGN.md`, `PRODUCT.md` and these ledgers.
 
 - Run it: `.claude/launch.json` config `site` (port 4321), or `npm --prefix site run dev`. Drafts show
-  in dev only. `npm --prefix site run build` passes: 3 pages, feed, sitemap, 25 MB of `dist`.
-- Round 2 (16 Nov 2026, late): rows 21 to 31. Checked in a headless browser at 1440x900 and 390x844: no
-  horizontal overflow, no broken image, no script error; hero arrows and all outbound links work.
-- Not checked: Safari and Firefox, a real phone, Lighthouse.
+  in dev only. Build: about 15 s, 3 pages, 25 MB of `dist`, 254 files.
+- Deploy: `npm run deploy` in `site/` (build, then direct upload to the Pages project `levent-website`,
+  branch `main`). Pushing to GitHub deploys nothing. Upload takes about 25 s.
+- A build cannot be previewed on `*.pages.dev`: a Cloudflare rule redirects those addresses to the live
+  domain, and `dev.leventaksakal.com` sits behind Cloudflare Access. Preview locally with
+  `npx wrangler pages dev dist`, which applies `_headers`.
+- `www.leventaksakal.com` does not resolve (no DNS record). Not asked for; noted.
+- Not checked: Safari and Firefox, a real phone.
 - Cover art: `npm --prefix site run covers` (Wikipedia page images for films, Steam for games, Apple's
   search API for albums). Film posters are only 220 to 280px wide because Apple's film search now
   returns nothing; a sharper source needs a decision (TMDB needs an API key). Arcane has no poster on
   Wikipedia and was left out of the films.
-- Design record: `DESIGN.md`. Product record: `PRODUCT.md`.
-- Old directions still in the tree and untouched: `website/`, `admin/`, `docs/v3/`, `prototypes/`.
+- `content/shelf/games.txt` and `musics.txt` (the full lists the shelf was picked from, with dates) are
+  kept on disk and ignored by git, so they are not in the public repository.
+- Old work: everything deleted on 16 Nov 2026 (row 38) is in `.git/pre-v4-2026-11-16.bundle` (56 MB,
+  local only). Restore a branch with `git fetch .git/pre-v4-2026-11-16.bundle v3:v3`. The admin's
+  `.dev.vars` is copied to `.git/pre-v4-admin.dev.vars`.
 
 ## Waiting on the owner
 
-- A look at the final site and what to change.
-- The two TODO paragraphs in the draft post, or a different first post.
+- Delete the leftover folder `admin/` (row 38), or say to keep it.
+- Whether to turn off Cloudflare's JavaScript detections for the zone (row 41): his security setting,
+  not changed by me.
+- The two TODO paragraphs in the draft post (`site/src/content/writing/`, `draft: true`, so it is not
+  on the site, but the file is in the public repository), or a different first post.
 - A CV without the phone number, if the site should link one.
-- Whether to deploy, and whether `website/`, `admin/`, `docs/v3/` and `prototypes/` can be deleted.
-- Whether to scrub the original photographs from the public repo's history (needs a history rewrite
-  and a force push, which his rules forbid without his say) and replace the live site's images.
+- Whether to scrub the 2025 photographs from the public repository's history. They carry EXIF (camera
+  model and date; no GPS in any of them). It needs a history rewrite and a force push, which his rules
+  forbid without his say. The new site's images carry no metadata.
 - The book list, and ratings for games (the dumps carry no playtime or rating).
 - The folder with more original photographs (the repo has six plus a portrait).
+- The role wording "Product owner and sole engineer" for APS and Temizel İSG (row 28): kept, not
+  objected to in round 3.
