@@ -1,5 +1,5 @@
 ---
-status: open
+status: closed
 created: 2026-11-16
 tags: [deploy, blog]
 ---
@@ -38,3 +38,12 @@ change goes live.
 
 ## Answer
 
+16 Nov 2026: "yeah we can enable auto deployment [...] so deploy path is just promotion to main.
+the CI should be intelligently written. So adding a shelv item or adding a blog vs changing the code
+are not the subject to same checks obviously".
+
+Option 2, taken further: every push to `main` deploys through the workflow
+`.github/workflows/site.yml`, and the checks depend on what changed (content: build, image
+metadata, links; code: also type check and Lighthouse budget). `npm run deploy` is removed. Asked
+how the push should reach production, he chose the GitHub Action over a Git-linked Pages project,
+because it uploads the same build it checked and deploys nothing when a check fails.

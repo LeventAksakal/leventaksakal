@@ -44,13 +44,15 @@ Status values: open, in progress, shipped not measured, done.
 | 35 | "use white BG for temizel its what the official site uses" (16 Nov 2026) | Temizel card on white. | done | Industry section |
 | 36 | "makesure to idiomatically setup robots.txt llms.txt and other stuff" (16 Nov 2026) | Crawler and host files exist, are correct and cannot drift from the pages. | done, measured on leventaksakal.com: `robots.txt`, `llms.txt`, `site.webmanifest`, `sitemap-index.xml`, `rss.xml` return 200 with the right content type and are generated from `site/src/data/site.ts`; `_headers` sets a content security policy, frame and referrer rules, and a one-year immutable cache for `/_astro/`; unknown paths return 404 | `curl -I https://leventaksakal.com/robots.txt` and the others |
 | 37 | "Then ship it" (16 Nov 2026) | The new site is what leventaksakal.com serves. | done, measured 16 Nov 2026: production deploy of `main`; in a headless browser 72 of 72 images load, no console error, no failed request. Lighthouse on a phone profile: accessibility 100, SEO 100, layout shift 0 | Open leventaksakal.com |
-| 38 | "prune every other branch; stale reworks experiments etc" (16 Nov 2026); "then you can prune everythinh else" (16 Nov 2026, later) | Only `main` remains; no stale code in the tree. | done: local and remote branches `v3`, `v4`, `redesign`, `pinboard-prototype`, `claude/wizardly-archimedes-3xochp` and one stash deleted; the paint-intro app, `website/`, `docs/v3/`, `prototypes/`, old `node_modules`, `.wrangler` and (second ask) the untracked folder `admin/` removed. Checked 16 Nov 2026: one branch, one worktree, no stash. The old branches are kept in one file, `.git/pre-v4-2026-11-16.bundle`; whether that goes too is ticket 0002 | `git branch -a`; `git worktree list`; `git bundle list-heads .git/pre-v4-2026-11-16.bundle` |
+| 38 | "prune every other branch; stale reworks experiments etc" (16 Nov 2026); "then you can prune everythinh else" (16 Nov 2026, later) | Only `main` remains; no stale code in the tree. | done: local and remote branches `v3`, `v4`, `redesign`, `pinboard-prototype`, `claude/wizardly-archimedes-3xochp` and one stash deleted; the paint-intro app, `website/`, `docs/v3/`, `prototypes/`, old `node_modules`, `.wrangler` and (second ask) the untracked folder `admin/` removed. Checked 16 Nov 2026: one branch, one worktree, no stash. The archive of the old branches, `.git/pre-v4-2026-11-16.bundle`, and the copy of the admin settings were deleted too on his word, "we can nuke the old versions IDC" (16 Nov 2026, ticket 0002): those branches no longer exist anywhere | `git branch -a`; `git worktree list`; `ls .git/pre-v4*` finds nothing |
 | 39 | "babytell I'm a partner its not my own product. idea belongs to a friend of mine and you can find the actual logo from the kotlin build assets" (16 Nov 2026) | BabyTell says partner and shows its real logo. | done: meta "Partner", text "A friend's idea that I joined as a partner", card is the crescent mark and wordmark converted from the Android app's vector drawables | Industry section |
 | 40 | "Also SWE in Istanbul read more slick no? since flipside is MSc?" (16 Nov 2026) | Top bar reads "SWE in Istanbul / MSc at Boğaziçi". | done; page title, description and the screen-reader heading still spell out "Software engineer" | Top bar |
 | 41 | Mine (16 Nov 2026): the first deploy scored 69 for performance on Lighthouse's phone profile. Then the owner: "optimize the i11y; browser performance and lighthouse scores etc" (16 Nov 2026) | Phone profile: performance 90 or more, largest contentful paint 2.5 s or less, accessibility, best practices and SEO 100, layout shift 0. | done, deployed 16 Nov 2026 (commit `bc45c98`). Measured on leventaksakal.com, three runs: performance 91, 96 and 99; LCP 1.7, 2.2 and 1.6 s; blocking time 350, 170 and 100 ms; layout shift 0; accessibility and SEO 100; page weight 513 KiB; `/writing/` 93. Best practices is 81 on the live domain against 100 for the same build served locally: the one failing audit (deprecated APIs) is Cloudflare's bot-detection script, which also takes 300 to 470 ms of main thread; keeping it or not is ticket 0003. Before the deploy, on the local build (`npm run preview`, same loaded machine, benchmark index about 1200): performance 65 and 69 before; 93, 87 and 95 after (three runs; the spread is whether the font arrives before the first layout). LCP 3.5 s to 2.3 s, blocking time 1,040 to 1,430 ms down to 220 to 460 ms, page weight 636 to 483 KiB, layout shift 0, accessibility, best practices and SEO 100; `/writing/` scores 100. Causes found with a trace and removed: the 70px CSS blur behind the hero held the renderer for 346 ms (now a 1 KB picture blurred at build time); a resize handler forced a full layout; 176 KB of web font (now 49 KB, the Turkish letters inlined so their late arrival no longer lays the page out twice); Projects, Shelf and Contact are laid out only when near the screen. Left: about 90 ms of first layout that is the web font's own cost; `font-display: optional` would remove it but shows Arial to a first-time visitor on a slow connection, so it stays `swap`. Not measured: a real phone | `npx lighthouse https://leventaksakal.com/`; the same against `npm run preview` shows the build without Cloudflare's script |
 | 42 | "image craousel chevrons could live outside of the image itself" (16 Nov 2026) | No control sits on a photograph at any width; the arrows stay one click from the photograph. | done, deployed 16 Nov 2026 (commit `bc45c98`): the arrows flank the progress ticks under the photograph (one row on a desktop; their own row with the ticks below 980px, 44px for a thumb). Measured at 1920, 1440, 1100, 1000, 981, 980, 721, 720, 390 and 320px: arrows below the photograph, on one line with the ticks, no horizontal overflow, the row keeps one height for all six captions (a caption never wraps; at 320px the longest one is cut with an ellipsis). Clicks, ticks, arrow keys, wrap-around and pause checked in a browser | Hero at any width |
 | 43 | "optimize the i11y" (16 Nov 2026) | Lighthouse accessibility 100 and the things it does not test: keyboard order, names, contrast on all six grounds, target sizes. | done, deployed 16 Nov 2026 (commit `bc45c98`): Lighthouse accessibility 100, 57 audits passed, 0 failed. Added a "Skip to content" link; the carousel's controls now live inside the carousel region and follow the photograph in tab order; a status line speaks the photograph only when the visitor changes it, never while the slideshow runs; idle ticks raised from 1.75:1 to 4:1; text contrast is 6.4:1 or better on every ground; Windows high-contrast draws the ticks. Not checked: a real screen reader, Safari, Firefox | Tab through the first screen; Lighthouse |
 | 44 | "tell me how I would go about authoring blogs (a seperate app or just write in md then deploy auto ships as static embed? the README should reflect how I use and update teh site day to day)" (16 Nov 2026) | The README answers "how do I write a post, change a fact, add a photograph, look at it, deploy" in that order, and every command in it works. | done, pushed 16 Nov 2026 (commit `53a2a31`): README rewritten around those tasks; `npm run preview` (build served with production headers) and `npm run strip` (remove image metadata, optional shrink) added and run. Whether a push should deploy is ticket 0001 | Follow the README's "Write a post" from a clean checkout |
+| 45 | "we can enable auto deployment [...] so deploy path is just promotion to main. the CI should be intelligently written. So adding a shelv item or adding a blog vs changing the code are not the subject to same checks obviously" (16 Nov 2026) | A push to `main` is the only deploy. Content (post, shelf, cover, photograph, logo): build, image metadata, links; live within 3 min. Code: also type check and Lighthouse budget; live within 6 min. A change outside `site/` starts nothing. A failed check deploys nothing and names what failed. | shipped, deploy step not proven. The workflow `site` is on `main` (commit `39044bb`). First run on GitHub, a code change with a cold image cache: change classified, build with image and link checks 70 s, type check 19 s, Lighthouse budget 63 s (home 99, 99, 99; accessibility, best practices, SEO 100; `/writing/` 100), all checks done 2 min 22 s after the push. The deploy job then stopped with "Nothing was deployed: the repository secret CLOUDFLARE_API_TOKEN [...] is missing": only the owner can create that token. Checked by hand: the classifier on seven file lists; the link check finds a broken link and a broken anchor; the budget fails and names the reason; the commit hook refuses a picture with EXIF. Not seen yet: a content-only push, the upload from GitHub, the time from push to live. `npm run deploy` is removed | Push a post, `gh run watch`; the commit shows a "production" deployment |
+| 46 | "we dont want bots to go into our site. a personal portfolio is made for human-gaze [...] you should enable strcit guards on leventaksakal.com on cloudflare" (16 Nov 2026) | Search engines and link previews pass; AI crawlers, scrapers and scripted clients are refused: `curl` gets 403, a browser gets the page, a pasted link still shows its card. | in progress. Done in the repository and live (uploaded by hand once, 16 Nov 2026, because the pipeline has no token yet): `llms.txt` is deleted and `robots.txt` disallows 24 AI crawlers by name while search engines stay allowed. Not done: every Cloudflare setting. The agent's connection was refused (403, scopes `bot-management.write` and `account-waf.write` not granted), so AI crawlers are still not blocked at the edge and `curl` still gets the page. The settings and the firewall rule are written out in `docs/decisions/0001-bot-guard.md`. Also open: the live `/llms.txt` still answers from a copy stored at Cloudflare's edge and needs a purge (`cache.purge`, not granted either) | The checks listed in `docs/decisions/0001-bot-guard.md` |
 
 ## Content decisions (16 Nov 2026, owner's words paraphrased closely)
 
@@ -66,18 +68,28 @@ Status values: open, in progress, shipped not measured, done.
   Desktop (not copied into the repo yet). He lets me pick a sample that reflects his taste. Books: he
   will list from memory.
 
-## Where work stopped (16 Nov 2026, round 4 deployed)
+## Where work stopped (16 Nov 2026, round 5: deploy on push, bot guard)
 
-leventaksakal.com serves `main` (the only branch) as of commit `53a2a31`: round 4 (rows 41 to 44:
-speed, accessibility, arrows off the photographs, README, `admin/` deleted) was deployed on
-16 Nov 2026 and checked on the live domain (home, `/writing/`, feed, sitemap, `llms.txt`, the cut
-font and the headers all answer). Nothing is uncommitted, nothing is unpushed, no work is in flight.
+leventaksakal.com serves the site as of commit `39044bb` on `main` (the only branch), uploaded by
+hand because the pipeline has no token yet. Nothing is uncommitted or unpushed. Two things are
+half done and both wait for the owner (see "Waiting on the owner"):
+
+- Deploy on push (row 45): the workflow runs and its checks pass; its deploy job fails until the
+  secret `CLOUDFLARE_API_TOKEN` exists. After he sets it: `gh run rerun <id> --failed` on the latest
+  run of `site`, then push a content-only change and write both push-to-live times into row 45.
+- Bot guard (row 46): the repository part is live; the Cloudflare part is not applied. After he
+  grants the scopes (or does it by hand): apply `docs/decisions/0001-bot-guard.md`, run its checks,
+  and measure the live site again (AI Labyrinth adds hidden links to the pages).
 
 - Run it: `.claude/launch.json` configs `site` (dev, port 4321) and `built` (the build with production
   headers, port 8788), or `npm run dev` / `npm run build` then `npm run preview` in `site/`. Drafts show
   in dev only. Build: about 15 s, 3 pages, 25 MB of `dist`, 248 files.
-- Deploy: `npm run deploy` in `site/` (build, then direct upload to the Pages project `levent-website`,
-  branch `main`). Pushing to GitHub deploys nothing. Upload takes about 25 s.
+- Deploy: push to `main` (workflow `.github/workflows/site.yml`, direct upload to the Pages project
+  `levent-website`). `npm run deploy` no longer exists; the by-hand command for an outage is in the
+  README.
+- Checks: `npm run check`, `npm run links`, `npm run budget` (needs `npm run preview` running) and
+  `npm run strip -- --check` in `site/`. The commit hook `.githooks/pre-commit` is turned on by
+  `npm install`.
 - A build cannot be previewed on `*.pages.dev`: a Cloudflare rule redirects those addresses to the live
   domain, and `dev.leventaksakal.com` sits behind Cloudflare Access. Use `npm run preview`.
 - New dev dependencies: `subset-font` (cuts the typeface, `npm run font`); `@fontsource-variable/archivo`
@@ -91,23 +103,14 @@ font and the headers all answer). Nothing is uncommitted, nothing is unpushed, n
   Wikipedia and was left out of the films.
 - `content/shelf/games.txt` and `musics.txt` (the full lists the shelf was picked from, with dates) are
   kept on disk and ignored by git, so they are not in the public repository.
-- Old work: everything deleted on 16 Nov 2026 (row 38) is in `.git/pre-v4-2026-11-16.bundle` (56 MB,
-  local only). Restore a branch with `git fetch .git/pre-v4-2026-11-16.bundle v3:v3`. The admin's
-  `.dev.vars` is copied to `.git/pre-v4-admin.dev.vars`.
+- Old work: gone for good. The archive of the old branches was deleted on 16 Nov 2026 (row 38).
 
 ## Waiting on the owner
 
-- Tickets: [0001 deploy on push](../../tickets/0001-deploy-on-push.md), [0002 delete the old-branch archive](../../tickets/0002-delete-old-branch-archive.md), [0003 keep Cloudflare's bot-detection script](../../tickets/0003-cloudflare-bot-script.md).
+- Create a Cloudflare API token with the one permission "Account, Cloudflare Pages, Edit" and run
+  `gh secret set CLOUDFLARE_API_TOKEN --repo LeventAksakal/leventaksakal` (row 45). Until then a push
+  to `main` is checked but not deployed, and the run shows red.
+- Bot guard on Cloudflare (row 46): grant the agent's Cloudflare connection the scopes
+  `bot-management.write`, `account-waf.write` and `cache.purge`, or set the values in
+  `docs/decisions/0001-bot-guard.md` by hand and purge `https://leventaksakal.com/llms.txt`.
 - The draft post waits for his two TODO paragraphs (row 6).
-- Whether to turn off Cloudflare's JavaScript detections for the zone (row 41): his security setting,
-  not changed by me.
-- The two TODO paragraphs in the draft post (`site/src/content/writing/`, `draft: true`, so it is not
-  on the site, but the file is in the public repository), or a different first post.
-- A CV without the phone number, if the site should link one.
-- Whether to scrub the 2025 photographs from the public repository's history. They carry EXIF (camera
-  model and date; no GPS in any of them). It needs a history rewrite and a force push, which his rules
-  forbid without his say. The new site's images carry no metadata.
-- The book list, and ratings for games (the dumps carry no playtime or rating).
-- The folder with more original photographs (the repo has six plus a portrait).
-- The role wording "Product owner and sole engineer" for APS and Temizel İSG (row 28): kept, not
-  objected to in round 3.

@@ -9,7 +9,7 @@ All commands run from `site/` (Node 22.23 or newer; `npm install` once).
 
 ### Write a post
 
-A post is one Markdown file. There is no separate app and no admin: write, look, deploy.
+A post is one Markdown file. There is no separate app and no admin: write, look, push.
 
 1. Create `site/src/content/writing/<slug>.md`. The file name is the address
    (`my-first-post.md` becomes `/writing/my-first-post/`).
@@ -32,8 +32,9 @@ A post is one Markdown file. There is no separate app and no admin: write, look,
    `npm run strip -- --max 1600 src/content/writing/img/name.jpg` removes its metadata and shrinks
    it to 1600px wide (the build compresses a post's pictures but does not resize them). Then write
    `![What the picture shows](./img/name.jpg)`.
-4. To publish, delete the `draft: true` line and run `npm run deploy`. The post appears on the home
-   page (the four newest), on `/writing/`, in `/rss.xml` and in the sitemap.
+4. To publish, delete the `draft: true` line, commit and push to `main`. The post is live about
+   three minutes later: on the home page (the four newest), on `/writing/`, in `/rss.xml` and in
+   the sitemap. A post can also be written in GitHub's web editor, from any machine.
 5. When you change a published post later, add `updated: 2026-12-01` under `date`.
 
 `draft: true` keeps a post off the site, but the file is still in the public repository once pushed.
@@ -41,7 +42,7 @@ A post is one Markdown file. There is no separate app and no admin: write, look,
 ### Change what the pages say
 
 Every fact on the home page is in `site/src/data/site.ts`: the top bar, work, research, education,
-projects, contact. Edit the text there; the pages, `llms.txt` and the page descriptions follow.
+projects, contact. Edit the text there; the pages and the page descriptions follow.
 A logo is a file in `site/public/logos/` named by the entry's `card.src`.
 
 ### Add or change a photograph in the opening carousel
@@ -64,11 +65,11 @@ Add an entry to `site/src/data/shelf.json`, then `npm run covers` to fetch the c
 npm run dev        # while editing: localhost:4321, reloads on save, shows drafts
 npm run build      # the real build into site/dist, about 15 seconds
 npm run preview    # serves site/dist on localhost:8788 with the production headers
-npm run deploy     # build, then upload to leventaksakal.com (about 40 seconds)
+git push           # on main: checked, then live (see Deploy)
 ```
 
-Pushing to GitHub does not deploy anything; `npm run deploy` does, and needs a one-time
-`npx wrangler login`. Commit and push as usual so the repository matches what is live.
+A push to `main` is the only way to deploy. Anything you want to look at first stays on a branch
+or uncommitted until you have looked.
 
 ## Commands
 
@@ -77,9 +78,11 @@ Pushing to GitHub does not deploy anything; `npm run deploy` does, and needs a o
 | `npm run dev` | Dev server on `localhost:4321`. Drafts are visible. |
 | `npm run build` | Static build into `site/dist/`. |
 | `npm run preview` | Serves the last build on `localhost:8788` under the Pages runtime, which applies `_headers` the way production does. |
-| `npm run deploy` | Build, then upload `dist/` to production. |
+| `npm run check` | Type check of the pages, components and data (about 30 seconds). |
+| `npm run links` | Every internal link, image and `#anchor` in the last build leads somewhere. |
+| `npm run budget` | Lighthouse against a running `npm run preview`: fails when the build misses the targets under "Speed and accessibility" (about 3 minutes). |
 | `npm run covers` | Fetch missing shelf covers into `src/assets/covers/`. |
-| `npm run strip -- <files>` | Remove EXIF, XMP and IPTC from images, in place. `--max 1600` also shrinks anything wider. |
+| `npm run strip -- <files>` | Remove EXIF, XMP and IPTC from images, in place. `--max 1600` also shrinks anything wider. `--check` only reports. |
 | `npm run font` | Rebuild the cut-down Archivo files in `src/assets/fonts/`. Only after changing `scripts/font.mjs` or upgrading the font package. |
 
 ## Layout
@@ -92,29 +95,64 @@ Pushing to GitHub does not deploy anything; `npm run deploy` does, and needs a o
 | `site/src/data/shelf.json` | The shelf. |
 | `site/src/components/`, `site/src/pages/`, `site/src/styles/` | How it looks. Read `DESIGN.md` and `PRODUCT.md` before changing it. |
 | `site/public/_headers` | Response headers: cache rules and the content security policy. |
+| `.github/workflows/site.yml` | The checks and the deploy that a push starts. |
+| `.githooks/pre-commit` | Refuses a commit that adds a picture with metadata. `npm install` turns it on. |
 | `docs/LEDGERS.md` | Index of the ledgers: what was asked, what shipped, what is still open. |
 | `tickets/` | Decisions that wait for an answer, one file each. |
 
 ## Deploy
 
-Cloudflare Pages project `levent-website`, direct upload, production branch `main`, which serves
-leventaksakal.com. There is no Git integration. The `*.pages.dev` addresses are no use for looking at
-a build before it is live (a Cloudflare rule redirects them to the live domain): use
-`npm run preview`.
+A push to `main` that touches `site/` starts the workflow `site` on GitHub. It checks the change,
+builds once, and uploads that same build to the Cloudflare Pages project `levent-website`, which
+serves leventaksakal.com. If a check fails, nothing is uploaded and the live site stays as it was.
 
-`robots.txt`, `llms.txt`, the web manifest, the sitemap and the RSS feed are generated at build time
-from the same data as the pages.
+What is checked depends on what changed:
+
+| The push changes | Checks | Live after about |
+| --- | --- | --- |
+| Only files outside `site/` (README, `docs/`, `tickets/`) | none, no deploy | |
+| Only content: posts and their pictures, `shelf.json`, covers, photographs, logos | build, image metadata, internal links | 3 minutes |
+| Anything else under `site/` (pages, components, styles, scripts, `site.ts`, headers, dependencies) | the same, plus type check and Lighthouse budget | 4 minutes |
+
+Content skips the two slow checks because a post or a shelf entry cannot break the layout or the
+scripts. Watch a run with `gh run watch` or under Actions on GitHub; the commit gets a green mark
+and a "production" deployment when it is live. A pull request runs the same checks without deploying.
+
+One-time setup: the workflow needs the repository
+variable `CLOUDFLARE_ACCOUNT_ID` and the secret `CLOUDFLARE_API_TOKEN`, a Cloudflare token with the
+single permission "Account, Cloudflare Pages, Edit" (dash.cloudflare.com, My Profile, API Tokens).
+Set it with `gh secret set CLOUDFLARE_API_TOKEN`, which asks for the value.
+
+If GitHub Actions is down and something must go live: `npm run build`, then
+`npx wrangler pages deploy dist --project-name levent-website --branch main` from `site/`.
+
+The `*.pages.dev` addresses are no use for looking at a build before it is live (a Cloudflare rule
+redirects them to the live domain): use `npm run preview`.
+
+`robots.txt`, the web manifest, the sitemap and the RSS feed are generated at build time from the
+same data as the pages.
+
+## Bots
+
+The site is for people. Search engines and the link previews of chat and social apps are welcome,
+so that a person can find the site by name and a pasted link shows its card. Crawlers that collect
+pages for language models, scrapers and scripted clients are not: `robots.txt` tells them so, and
+Cloudflare stops the ones that do not listen. The Cloudflare settings are not in this repository;
+they are written down in `docs/decisions/0001-bot-guard.md`.
 
 ## Speed and accessibility
 
 Measured with Lighthouse on its phone profile against `npm run preview`:
 
 ```
-npx lighthouse http://127.0.0.1:8788/ --view
+npm run budget
 ```
 
-Targets: performance 90 or more, accessibility, best practices and SEO 100, no layout shift. What
-keeps it there, so a later change does not undo it by accident:
+Targets: performance 90 or more, accessibility, best practices and SEO 100, no layout shift. The
+budget fails a change to the code that misses them (performance is the median of three runs; on
+GitHub it reads 99, on a desk with other work going 83 to 95). On the live domain best practices
+reads 81: Cloudflare's bot detection adds a script of its own, which is the price of keeping bots
+out. What keeps the rest there, so a later change does not undo it by accident:
 
 - The first photograph is the largest thing on the first screen. It loads first
   (`fetchpriority="high"`); the other five wait and load at low priority.
@@ -131,6 +169,7 @@ keeps it there, so a later change does not undo it by accident:
 ## Rules for content
 
 - Every image in the repository is re-encoded without EXIF or XMP before it is added
-  (`npm run strip`). No phone number and no home address anywhere.
+  (`npm run strip`); the commit hook and the CI refuse one that is not. No phone number and no
+  home address anywhere.
 - English only. Facts only, from the CV or the owner's own words.
 - Logos and cover art belong to their owners and are shown to name the thing they belong to.

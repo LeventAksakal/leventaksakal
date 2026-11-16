@@ -3,7 +3,9 @@
 # What runs depends on what changed (job "changes"):
 #   nothing under site/    the workflow does not start (see "paths" below)
 #   content only           build, image metadata, internal links, deploy        target: live in 3 min
-#   anything else          the same, plus type check and Lighthouse budget       target: live in 6 min
+#   anything else          the same, plus type check and Lighthouse budget       target: live in 4 min
+# First run, 16 Nov 2026, a code change with a cold image cache: every check done 2 min 22 s
+# after the push.
 # Content is a post, a post's pictures, the shelf, cover art, a photograph or a logo. Those cannot
 # break the layout or the scripts, so they skip the two slow checks. Everything else under site/
 # counts as code, the facts in src/data/site.ts included.

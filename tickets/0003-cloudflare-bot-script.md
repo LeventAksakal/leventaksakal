@@ -1,5 +1,5 @@
 ---
-status: open
+status: closed
 created: 2026-11-16
 tags: [cloudflare, performance]
 ---
@@ -42,3 +42,10 @@ crawler rules are a separate setting.
 
 ## Answer
 
+16 Nov 2026: "yeah we dont want bots to go into our site. a personal portfolio is made for
+human-gaze; its not a ecom site. so you should enable strcit guards on leventaksakal.com on
+cloudflare."
+
+Option 2, and more: the script stays and the guard is tightened. Recorded in
+[docs/decisions/0001-bot-guard.md](../docs/decisions/0001-bot-guard.md). Best practices stays at 81
+on the live domain; that is the accepted price.

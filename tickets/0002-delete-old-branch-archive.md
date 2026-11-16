@@ -1,5 +1,5 @@
 ---
-status: open
+status: closed
 created: 2026-11-16
 tags: [cleanup]
 ---
@@ -32,3 +32,8 @@ Option 1. You disliked those versions, but 56 MB is cheap and the deletion is pe
 
 ## Answer
 
+16 Nov 2026: "we can nuke the old versions IDC".
+
+Option 2. `.git/pre-v4-2026-11-16.bundle` and `.git/pre-v4-admin.dev.vars` were deleted the same
+day. The branches `v3`, `v4`, `redesign`, `pinboard-prototype`, `backup/pre-v4` and
+`claude/wizardly-archimedes-3xochp` no longer exist anywhere.
