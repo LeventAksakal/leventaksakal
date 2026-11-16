@@ -9,7 +9,7 @@ interface Props { entry: Entry; stacked?: boolean }
 const { entry, stacked = false } = Astro.props;
 const { card } = entry;
 const Card = entry.href ? 'a' : 'div';
-const link = entry.href ? { href: entry.href, rel: 'noopener', tabindex: -1, 'aria-hidden': 'true' } : {};
+const link = entry.href ? { href: entry.href, rel: 'noopener', tabindex: -1, 'aria-hidden': 'true' as const } : {};
 ---
 <article class:list={['entry', { stacked }]} id={entry.id}>
   {card.kind === 'logo' && (

@@ -1,5 +1,5 @@
-# Cloudflare Pages, direct upload (no Git integration: pushing to GitHub does not deploy).
-# Deploy with `npm run deploy` from this folder. Production is the branch `main`.
+# Cloudflare Pages, direct upload. The workflow .github/workflows/site.yml uploads the build on
+# every push to main; nothing is deployed from a desk. Production is the branch `main`.
 name = "levent-website"
 pages_build_output_dir = "dist"
 compatibility_date = "2026-06-01"
