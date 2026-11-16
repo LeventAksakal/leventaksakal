@@ -76,6 +76,7 @@ h1, h2, h3 { margin: 0; text-wrap: balance; }
 .bar .name { font-size: 1.2rem; line-height: 1; text-decoration: none; white-space: nowrap; }
 .bar .tag { display: flex; align-items: center; gap: .5em; padding-left: 16px; border-left: 1px solid color-mix(in srgb, var(--text) 26%, transparent); font-size: .93rem; line-height: 1.25; color: var(--soft); white-space: nowrap; }
 .bar .tag i { font-style: normal; color: var(--accent); }
+.bar .tag abbr { text-decoration: none; }
 .bar .tag .at { display: inline-flex; align-items: center; gap: .4em; }
 .bar .seal { width: 1.55em; height: 1.55em; border-radius: 50%; box-shadow: 0 1px 6px rgb(0 0 0 / .5); }
 .bar nav { display: flex; gap: clamp(14px, 2.4vw, 32px); font-size: .97rem; color: var(--soft); }

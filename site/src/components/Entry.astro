@@ -2,7 +2,6 @@
 // One line of work or study. On the left a 16:9 title card that carries the real logo or
 // wordmark on its own brand ground; where none exists the card is set in type. Card and name
 // both lead to the thing itself when it has a public address.
-import '@fontsource-variable/fredoka';
 import type { Entry } from '../data/site';
 import { site } from '../data/site';
 
@@ -17,9 +16,6 @@ const link = entry.href ? { href: entry.href, rel: 'noopener', tabindex: -1, 'ar
     <Card class:list={['card', card.fit]} style={`--ground: ${card.ground}`} {...link}>
       <img src={card.src} alt={entry.href ? '' : `${card.alt} logo`} loading="lazy" decoding="async" />
     </Card>
-  )}
-  {card.kind === 'babytell' && (
-    <Card class="card babytell" style="--ground: #f6efe5" {...link}><span>BabyTell</span></Card>
   )}
   {card.kind === 'word' && (
     <Card class="card word" {...link}><span>{card.text.split(/(\d)/).map((part) => (/\d/.test(part) ? <b>{part}</b> : part))}</span></Card>
@@ -79,7 +75,6 @@ const link = entry.href ? { href: entry.href, rel: 'noopener', tabindex: -1, 'ar
   .card.tall img { width: 70%; height: 82%; }
   .card.seal img { width: auto; height: 82%; aspect-ratio: 1; border-radius: 50%; box-shadow: 0 6px 18px -6px rgb(0 0 0 / .6); }
 
-  .babytell span { font-family: 'Fredoka Variable', var(--font); font-weight: 600; font-size: 19cqi; letter-spacing: -.01em; color: #be5422; }
   .word { background: color-mix(in srgb, var(--accent) 14%, var(--bg)); }
   .word span { font-stretch: 108%; font-weight: 620; font-size: 17cqi; letter-spacing: -.045em; color: var(--text); }
   .word b { font-weight: inherit; color: var(--accent); }

@@ -15,10 +15,10 @@ Everything else is type, real logos and real cover art. Nothing is illustrated o
 - One family: Archivo Variable (self-hosted, width axis). Display voice is width 108%, weight 620,
   sentence case, tight tracking, at most 3rem for section headings. The condensed heavy upper case
   of round 1 "felt off" to the owner (16 Nov 2026): do not bring it back. Body is width 100%,
-  1.0625rem. No second text family. Fredoka appears only inside the BabyTell title card because it
-  is that product's own wordmark face.
+  1.0625rem. No second text family.
 - No text on the photographs. Who this is sits in the top bar beside the name: role, city, and
-  "MSc at" with the Boğaziçi seal.
+  "MSc at" with the Boğaziçi seal. The role is written "SWE" there, to sit level with "MSc"; the
+  page title, description and the heading for screen readers spell out "Software engineer".
 - Colour: `--bg` and `--accent` come from `photos` in `src/data/site.ts` (one pair per photograph).
   Text is `#ece8de`; `--soft`, `--dim`, `--rule`, `--raise` are mixes of text and ground. The
   yellow `#f6dc6b` is fixed and used only for draft marks and the owner's quoted
@@ -26,8 +26,9 @@ Everything else is type, real logos and real cover art. Nothing is illustrated o
 - Photographs: shown sharp at 2.11:1, never as a blurred background behind content. The only blur
   is the ambient light around the frame, which is a 64px copy of the same photograph.
 - Names of universities, companies and projects come with their real logo or wordmark on a 16:9
-  title card with the brand's own ground. No logo exists: the card is set in type (BabyTell in its
-  brand face; the research project by its name, me2exp; repositories as their GitHub path). A logo
+  title card with the brand's own ground. No logo exists: the card is set in type (the
+  research project by its name, me2exp; repositories as their GitHub path). BabyTell's card is its
+  real mark and wordmark, converted from the Android app's vector drawables. A logo
   inside a card is positioned absolutely so its percentages are of the card: a tall mark sized by
   width alone outgrows a 16:9 card and gets cut (the MOQtail glass in round 1).
 - Everything that has a public address is a link: employers, universities, projects, and every

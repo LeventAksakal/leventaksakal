@@ -24,7 +24,6 @@ export const photos = [
 
 export type Card =
   | { kind: 'logo'; src: string; alt: string; ground: string; fit?: 'wide' | 'tall' | 'seal' }
-  | { kind: 'babytell' }
   | { kind: 'word'; text: string }
   | { kind: 'repo'; repo: string };
 
@@ -60,9 +59,9 @@ export const industry: Entry[] = [
   {
     id: 'babytell',
     name: 'BabyTell',
-    meta: ['Own product', 'In development'],
-    text: 'Bedtime stories told in a parent’s own voice. Vue 3 on the web, Kotlin and Compose on Android over a shared Rust engine.',
-    card: { kind: 'babytell' },
+    meta: ['Partner', 'In development'],
+    text: 'Bedtime stories told in a parent’s own voice. A friend’s idea that I joined as a partner. Vue 3 on the web, Kotlin and Compose on Android over a shared Rust engine.',
+    card: { kind: 'logo', src: '/logos/babytell.svg', alt: 'BabyTell', ground: '#f6efe5', fit: 'tall' },
   },
   {
     id: 'constructor',

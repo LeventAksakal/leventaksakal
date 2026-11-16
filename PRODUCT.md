@@ -40,7 +40,7 @@ is the companion document; experience and education come from the same source (`
 
 - Landing page is neutral and points to both industry work and research with equal weight.
 - Industry: APS for Özyeğin University (internal system: describe it, never show its screens),
-  Temizel İSG, BabyTell (in development, shown as in progress), internships at Constructor Tech and
+  Temizel İSG, BabyTell (a friend's idea; the owner is a partner, not the owner of the product; in development), internships at Constructor Tech and
   TÜBİTAK SAGE.
 - Research: Turkish meaning-to-expression search (ongoing, aimed at publication); MOQtail (open-source
   contribution, counts as research). Thesis interests, not started: backdoors and sleeper agents in LLMs,
