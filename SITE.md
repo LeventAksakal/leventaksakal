@@ -86,8 +86,8 @@ node profile/preview.mjs   # localhost:8790 shows the README as GitHub will, lig
 ```
 
 Run `render` alone after changing an entry in `site.ts` or a photograph. Then commit and push;
-nothing under `site/` changes, so nothing is deployed. `collect.mjs` writes counts only (per day,
-per hour, per language, per tool) and names no project that the site does not already name; what
+nothing under `site/` changes, so nothing is deployed. `collect.mjs` writes counts only (commits per
+week and project, lines per language) and names no project that the site does not already name; what
 it counts is written at its top and under "How the numbers are counted" in the README.
 
 ## Commands

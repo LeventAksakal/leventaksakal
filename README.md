@@ -6,31 +6,17 @@ Software engineer in Istanbul and MSc student in computer engineering at Boğazi
 
 ### The last twelve months
 
-<picture><source media="(prefers-color-scheme: dark)" srcset="profile/figures-dark.svg"><img src="profile/figures-light.svg" width="100%" alt="4,227 commits, 190 days with a commit, of 368, 37 repositories, 1.65M lines of source standing"></picture>
+<picture><source media="(prefers-color-scheme: dark)" srcset="profile/figures-dark.svg"><img src="profile/figures-light.svg" width="100%" alt="4,236 commits, 190 days with a commit, of 368, 37 repositories, 1.65M lines of source standing"></picture>
 
 <br>
 
-<picture><source media="(prefers-color-scheme: dark)" srcset="profile/year-dark.svg"><img src="profile/year-light.svg" width="100%" alt="Commits a week by project, 17 Nov 2025 to 19 Nov 2026: Temizel İSG 1,230, APS 1,039, me2exp 552, Talk Tracks 469, BabyTell 317, Notification system 110, Everything else 510."></picture>
-
-<sub>17 Nov 2025 to 19 Nov 2026, counted from the 40 git repositories on my machine, public and private. The longest run of days with a commit is 26; the busiest day had 241, on 28 Oct 2026. I work with coding agents: these are the commits and lines made under my name, by me and by the agents I run.</sub>
-
-### Languages and tools
-
-<picture><source media="(prefers-color-scheme: dark)" srcset="profile/languages-dark.svg"><img src="profile/languages-light.svg" width="100%" alt="Lines of source by language: TypeScript 905k (55%), SQL 195k (12%), Vue 153k (9%), Python 129k (8%), Rust 128k (8%), Go 42k (3%), JavaScript 41k (2%), 7 more 60k (4%)."></picture>
-
-<sub>1,653,296 non-blank lines of source in 37 repositories, as they stand today. Beside them stand 200,942 lines of Markdown: ledgers, decisions and briefs. In the twelve months 2.84M lines of source were added and 1.1M removed.</sub>
+<picture><source media="(prefers-color-scheme: dark)" srcset="profile/year-dark.svg"><img src="profile/year-light.svg" width="100%" alt="Commits a week by project, 17 Nov 2025 to 19 Nov 2026: Temizel İSG 1,233, APS 1,042, me2exp 552, Talk Tracks 469, BabyTell 317, Notification system 110, Everything else 513."></picture>
 
 <br>
 
-<picture><source media="(prefers-color-scheme: dark)" srcset="profile/tools-dark.svg"><img src="profile/tools-light.svg" width="100%" alt="Repositories that use each tool: TypeScript 11, GitHub Actions 10, Vite 9, Docker 8, Vitest 6, Vue 6, PostgreSQL 5, Playwright 5, Serde 4, pytest 4, React 4."></picture>
+<picture><source media="(prefers-color-scheme: dark)" srcset="profile/languages-dark.svg"><img src="profile/languages-light.svg" width="100%" alt="Lines of source by language: TypeScript 905k (55%), SQL 195k (12%), Vue 153k (9%), Python 129k (8%), Rust 128k (8%), Go 42k (3%), JavaScript 42k (3%), 7 more 60k (4%)."></picture>
 
-<sub>The number of repositories whose manifests name the tool, of 37.</sub>
-
-### When the commits land
-
-<picture><source media="(prefers-color-scheme: dark)" srcset="profile/hours-dark.svg"><img src="profile/hours-light.svg" width="100%" alt="Commits by weekday and hour of the day. The busiest hour is 13:00 to 14:00; 26% of the commits fall on a weekend."></picture>
-
-<sub>Local time. The busiest hour is 13:00 to 14:00; 26% of the commits fall on a weekend.</sub>
+<sub>17 Nov 2025 to 19 Nov 2026, from the 40 git repositories on my machine, public and private; the bar is the 1,653,910 lines of source standing in them today. I work with coding agents: these are the commits and lines made under my name, by me and by the agents I run.</sub>
 
 <details>
 <summary>How the numbers are counted</summary>
@@ -40,8 +26,7 @@ Software engineer in Istanbul and MSc student in computer engineering at Boğazi
 Counted on 19 Nov 2026 by [`profile/collect.mjs`](profile/collect.mjs) and drawn by [`profile/render.mjs`](profile/render.mjs); the numbers are in [`profile/stats.json`](profile/stats.json).
 
 - A commit is a non-merge commit on `main`, `master`, `stage` or the branch checked out, made under my name. Commits that only exist on other branches are not counted.
-- A repository counts as mine when I wrote at least 60% of the commits that people wrote in it. Lines and tools are counted only there.
-- A line is a non-blank line in a tracked source file. Lock files, generated files, vendored code, design exports, the work folders of coding agents, data and notebooks are left out.
-- A tool is counted once per repository whose `package.json`, `Cargo.toml`, `pyproject.toml`, `requirements.txt` or `go.mod` names it; Docker and GitHub Actions by their files.
+- A repository counts as mine when I wrote at least 60% of the commits that people wrote in it. Lines are counted only there.
+- A line is a non-blank line in a tracked source file. Lock files, generated files, vendored code, design exports, the work folders of coding agents, data, notebooks and Markdown are left out.
 
 </details>
