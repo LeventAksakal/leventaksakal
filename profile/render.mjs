@@ -1,12 +1,11 @@
-// Draws the profile README: profile/*.svg and README.md, from profile/stats.json (the numbers,
-// written by collect.mjs) and site/src/data/site.ts (the name, the links and the photographs).
+// Draws the profile README: profile/hero.svg and README.md, from site/src/data/site.ts (the name,
+// the links and the photographs).
 //
 //   node profile/render.mjs
 //
-// GitHub shows a README's SVG files as images: no scripts, no outside fonts, no hover. So each
-// file carries what it needs: the typeface cut down to the characters it draws, its colours for
-// one GitHub theme (every chart exists as -light and -dark, chosen by <picture> in the README),
-// and, in the hero, the six photographs. Needs `npm install` in site/ (sharp, subset-font).
+// GitHub shows a README's SVG file as an image: no scripts, no outside fonts, no hover. So the
+// hero carries what it needs: the typeface cut down to the characters it draws and the six
+// photographs. Needs `npm install` in site/ (sharp, subset-font).
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -20,41 +19,14 @@ const req = createRequire(path.join(repo, 'site', 'package.json'));
 const load = async (name) => (await import(pathToFileURL(req.resolve(name)).href)).default;
 const sharp = await load('sharp');
 const subsetFont = await load('subset-font');
-const stats = JSON.parse(fs.readFileSync(path.join(here, 'stats.json'), 'utf8'));
 
 const W = 760; // every drawing is 760 units wide and scales to the README column
 
-// Colours. Ink and rules are GitHub's own for each theme, so a chart sits in the page like text.
-// The blue ramp and the categorical hues were checked with the dataviz palette validator against
-// both page grounds (#ffffff and #0d1117): colour-blind separation, lightness band, contrast.
-const THEMES = {
-  light: {
-    ink: '#1f2328', soft: '#59636e', track: '#eaeef2',
-    seq: ['#b7d3f6', '#6da7ec', '#2a78d6', '#184f95', '#0d366b'],
-    cat: ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#008300', '#6250d6'],
-    other: '#afb8c1',
-  },
-  dark: {
-    ink: '#f0f6fc', soft: '#9198a1', track: '#1a2029',
-    seq: ['#104281', '#1c5cab', '#3987e5', '#86b6ef', '#cde2fb'],
-    cat: ['#3987e5', '#d95926', '#199e70', '#c98500', '#d55181', '#0ca30c', '#9085e9'],
-    other: '#484f58',
-  },
-};
-
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-const num = (n) => n.toLocaleString('en-US');
-const short = (n) =>
-  n >= 1e6 ? `${(n / 1e6).toFixed(2).replace(/\.?0+$/, '')}M` : n >= 1e3 ? `${Math.round(n / 1e3)}k` : String(n);
-const pct = (n) => (n < 0.01 ? 'under 1%' : `${Math.round(n * 100)}%`);
 const r1 = (n) => Math.round(n * 10) / 10;
-const day = (key) => {
-  const [y, m, d] = key.split('-').map(Number);
-  return `${d} ${'Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec'.split(' ')[m - 1]} ${y}`;
-};
 
 // Archivo, cut to the characters one drawing uses and inlined. The site's own cut keeps every
-// Latin letter (45 KB); a chart needs a few dozen glyphs (about 6 KB).
+// Latin letter (45 KB); the hero needs a few dozen glyphs.
 const fontDir = path.join(repo, 'site/node_modules/@fontsource-variable/archivo/files');
 const fontFiles = ['archivo-latin-wdth-normal.woff2', 'archivo-latin-ext-wdth-normal.woff2'].map((f) =>
   fs.readFileSync(path.join(fontDir, f)),
@@ -86,20 +58,6 @@ async function write(name, { h, body, css = '', ink, soft, label }) {
   fs.writeFileSync(path.join(here, name), svg);
   sizes[name] = svg.length;
 }
-
-// Five steps of "how many", cut where the non-zero values fall into fifths.
-const cutsOf = (values) => {
-  const s = values.filter((v) => v > 0).sort((a, b) => a - b);
-  return [...new Set([1, 2, 3, 4].map((i) => s[Math.floor((s.length * i) / 5)]))];
-};
-const levelOf = (v, cuts) => cuts.filter((c) => v >= c).length;
-const ranges = (cuts) =>
-  [1, ...cuts]
-    .map((lo, i, all) => {
-      const hi = all[i + 1] === undefined ? null : all[i + 1] - 1;
-      return hi === null ? { i, text: `${lo}+` } : hi < lo ? null : { i, text: hi === lo ? `${lo}` : `${lo} to ${hi}` };
-    })
-    .filter(Boolean);
 
 // ---- The hero: six photographs, the ground and accent colour following the one on screen ----
 
@@ -167,155 +125,19 @@ async function hero() {
   });
 }
 
-// ---- Four figures, set in type ----
-
-function figures(t) {
-  const c = stats.commits;
-  const cols = [
-    [num(c.window), 'commits'],
-    [num(c.activeDays), `days with a commit, of ${stats.window.days}`],
-    [num(stats.repos.activeInWindow), 'repositories'],
-    [short(stats.lines.codeTotal), 'lines of source standing'],
-  ];
-  const xs = [0, 170, 370, 540];
-  const body = cols
-    .map(
-      ([big, small], i) =>
-        `<text class="d n" x="${xs[i]}" y="40" style="font-size:42px">${big}</text><text class="s" x="${xs[i] + 1}" y="66">${small}</text>`,
-    )
-    .join('');
-  return { h: 76, body, ...t, label: cols.map((x) => x.join(' ')).join(', ') };
-}
-
-// ---- The year by project: one row a project, one cell a week ----
-
-const projectTotals = stats.projects
-  .map((name) => ({ name, total: stats.weeks.reduce((a, w) => a + w.commits[name], 0) }))
-  .sort((a, b) => (a.name === 'Everything else') - (b.name === 'Everything else') || b.total - a.total);
-
-function year(t) {
-  const X0 = 142;
-  const pitch = 10.8;
-  const cw = 8.8;
-  const ROW = 26;
-  const TOP = 24;
-  const cuts = cutsOf(stats.weeks.flatMap((w) => Object.values(w.commits)));
-  let body = '';
-  let last = -9;
-  stats.weeks.forEach((w, i) => {
-    const [, m] = w.from.split('-').map(Number);
-    const prev = i ? Number(stats.weeks[i - 1].from.split('-')[1]) : m;
-    if (i && m !== prev && i - last >= 3) {
-      body += `<text class="s" x="${r1(X0 + i * pitch)}" y="13" style="font-size:13px">${'Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec'.split(' ')[m - 1]}</text>`;
-      last = i;
-    }
-  });
-  projectTotals.forEach(({ name, total }, r) => {
-    const y = TOP + r * ROW;
-    body += `<text x="0" y="${y + 15}">${esc(name)}</text><text class="s n e" x="${W}" y="${y + 15}">${num(total)}</text>`;
-    stats.weeks.forEach((w, i) => {
-      const v = w.commits[name];
-      body += `<rect x="${r1(X0 + i * pitch)}" y="${y}" width="${cw}" height="20" rx="2" fill="${v ? t.seq[levelOf(v, cuts)] : t.track}"/>`;
-    });
-  });
-  const ly = TOP + projectTotals.length * ROW + 12;
-  let lx = X0;
-  body += `<text class="s" x="0" y="${ly + 11}" style="font-size:13px">Commits in a week</text>`;
-  for (const { i, text } of ranges(cuts)) {
-    body += `<rect x="${lx}" y="${ly}" width="${cw}" height="14" rx="2" fill="${t.seq[i]}"/><text class="s n" x="${lx + cw + 6}" y="${ly + 11}" style="font-size:13px">${text}</text>`;
-    lx += cw + 6 + text.length * 7.2 + 18;
-  }
-  return {
-    h: ly + 18, body, ...t,
-    label: `Commits a week by project, ${day(stats.window.from)} to ${day(stats.window.to)}: ${projectTotals.map((x) => `${x.name} ${num(x.total)}`).join(', ')}.`,
-  };
-}
-
-// ---- Languages: one bar, split by lines of source ----
-
-const langs = (() => {
-  const all = Object.entries(stats.lines.code);
-  const top = all.slice(0, 7).map(([name, lines]) => ({ name, lines }));
-  const rest = all.slice(7);
-  if (rest.length) top.push({ name: `${rest.length} more`, lines: rest.reduce((a, [, n]) => a + n, 0), other: true });
-  return top.map((l) => ({ ...l, share: l.lines / stats.lines.codeTotal }));
-})();
-
-function languages(t) {
-  const GAP = 2;
-  const room = W - GAP * (langs.length - 1);
-  let x = 0;
-  let body = `<clipPath id="b"><rect width="${W}" height="16" rx="4"/></clipPath><g clip-path="url(#b)">`;
-  langs.forEach((l, i) => {
-    const w = Math.max(3, l.share * room);
-    body += `<rect x="${r1(x)}" y="0" width="${r1(w)}" height="16" fill="${l.other ? t.other : t.cat[i]}"/>`;
-    x += w + GAP;
-  });
-  body += '</g>';
-  langs.forEach((l, i) => {
-    const cx = (i % 4) * 190;
-    const cy = 46 + Math.floor(i / 4) * 30;
-    body += `<rect x="${cx}" y="${cy - 10}" width="10" height="10" rx="2" fill="${l.other ? t.other : t.cat[i]}"/><text x="${cx + 17}" y="${cy}">${esc(l.name)}<tspan class="s n" dx="8">${short(l.lines)}</tspan></text>`;
-  });
-  return {
-    h: 46 + Math.floor((langs.length - 1) / 4) * 30 + 8, body, ...t,
-    label: `Lines of source by language: ${langs.map((l) => `${l.name} ${short(l.lines)} (${pct(l.share)})`).join(', ')}.`,
-  };
-}
-
 // ---- The README ----
 
-// On one line: see preview.mjs for why no paragraph in the README may hold a line end.
-const picture = (name, alt) =>
-  `<picture><source media="(prefers-color-scheme: dark)" srcset="profile/${name}-dark.svg"><img src="profile/${name}-light.svg" width="100%" alt="${esc(alt)}"></picture>`;
+// The paragraph stays on one line: see preview.mjs for why it may not hold a line end.
+const readme = (alt) => `<!-- Generated by profile/render.mjs from site/src/data/site.ts. Edit that, not this file. The site's own README is SITE.md. -->
 
-function readme(alts) {
-  const from = day(stats.window.from);
-  const to = day(stats.window.to);
-  return `<!-- Generated by profile/render.mjs from site/src/data/site.ts and profile/stats.json. Edit those, not this file. The site's own README is SITE.md. -->
-
-<a href="${site.url}"><img src="profile/hero.svg" width="100%" alt="${esc(alts.hero)}"></a>
+<a href="${site.url}"><img src="profile/hero.svg" width="100%" alt="${esc(alt)}"></a>
 
 ${site.description.split('. ')[0]}. What I work on, the research and the projects are on [${site.url.replace('https://', '')}](${site.url}). [LinkedIn](${site.linkedin.href}) · [${site.email}](mailto:${site.email})
-
-### The last twelve months
-
-${picture('figures', alts.figures)}
-
-<br>
-
-${picture('year', alts.year)}
-
-<br>
-
-${picture('languages', alts.languages)}
-
-<sub>${from} to ${to}, from the ${stats.repos.scanned} git repositories on my machine, public and private; the bar is the ${num(stats.lines.codeTotal)} lines of source standing in them today. I work with coding agents: these are the commits and lines made under my name, by me and by the agents I run.</sub>
-
-<details>
-<summary>How the numbers are counted</summary>
-
-<br>
-
-Counted on ${day(stats.collected)} by [\`profile/collect.mjs\`](profile/collect.mjs) and drawn by [\`profile/render.mjs\`](profile/render.mjs); the numbers are in [\`profile/stats.json\`](profile/stats.json).
-
-- A commit is a non-merge commit on \`main\`, \`master\`, \`stage\` or the branch checked out, made under my name. Commits that only exist on other branches are not counted.
-- A repository counts as mine when I wrote at least 60% of the commits that people wrote in it. Lines are counted only there.
-- A line is a non-blank line in a tracked source file. Lock files, generated files, vendored code, design exports, the work folders of coding agents, data, notebooks and Markdown are left out.
-
-</details>
 `;
-}
 
 await hero();
-const alts = {};
-for (const [name, draw] of Object.entries({ figures, year, languages })) {
-  for (const [mode, t] of Object.entries(THEMES)) {
-    const d = draw(t);
-    alts[name] = d.label;
-    await write(`${name}-${mode}.svg`, d);
-  }
-}
-alts.hero = `${site.name}. Six of my own photographs: ${photos.map((ph) => `${ph.place}, ${ph.when}`).join('; ')}.`;
-fs.writeFileSync(path.join(repo, 'README.md'), readme(alts));
+fs.writeFileSync(
+  path.join(repo, 'README.md'),
+  readme(`${site.name}. Six of my own photographs: ${photos.map((ph) => `${ph.place}, ${ph.when}`).join('; ')}.`),
+);
 for (const [name, n] of Object.entries(sizes)) console.log(`${name.padEnd(22)} ${(n / 1024).toFixed(1)} KB`);

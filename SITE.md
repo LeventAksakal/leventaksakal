@@ -76,19 +76,18 @@ or uncommitted until you have looked.
 
 ### Refresh the profile README
 
-`README.md` is generated: the photographs and the entries come from `site/src/data/site.ts`, the
-numbers from `profile/stats.json`. Do not edit it by hand. From the repository root:
+`README.md` is generated: the opening picture with its six photographs, and one paragraph that
+links the site. The name, the links, the first sentence and the photographs come from
+`site/src/data/site.ts`. Do not edit it by hand. From the repository root:
 
 ```
-node profile/collect.mjs   # only when the numbers should move: scans the git repositories in C:/Code, about 5 minutes
-node profile/render.mjs    # draws profile/*.svg and writes README.md, about 10 seconds
+node profile/render.mjs    # draws profile/hero.svg and writes README.md, about 10 seconds
 node profile/preview.mjs   # localhost:8790 shows the README as GitHub will, light or dark as the browser is set
 ```
 
-Run `render` alone after changing an entry in `site.ts` or a photograph. Then commit and push;
-nothing under `site/` changes, so nothing is deployed. `collect.mjs` writes counts only (commits per
-week and project, lines per language) and names no project that the site does not already name; what
-it counts is written at its top and under "How the numbers are counted" in the README.
+Run `render` after changing the name, a link, the description or a photograph in `site.ts`. Then
+commit and push; nothing under `site/` changes, so nothing is deployed. The page holds no numbers,
+so nothing on it goes stale between those changes.
 
 ## Commands
 
@@ -109,7 +108,7 @@ it counts is written at its top and under "How the numbers are counted" in the R
 | Path | What it is |
 | --- | --- |
 | `README.md` | The GitHub profile page. Generated, see "Refresh the profile README". |
-| `profile/` | What draws it: `collect.mjs` (numbers), `render.mjs` (pictures and text), `preview.mjs`, and their output. |
+| `profile/` | What draws it: `render.mjs` (the picture and the text), `preview.mjs`, and `hero.svg`. |
 | `site/` | The Astro project. Everything that ships is built from here. |
 | `site/src/content/writing/` | Posts, one Markdown file each. |
 | `site/src/data/site.ts` | Every fact on the pages, and the list of photographs. |
