@@ -6,6 +6,7 @@ a measurable target, the status and how to check it.
 | Ledger | Covers |
 |---|---|
 | [site/TODO.md](site/TODO.md) | The personal site: direction, content, design, blog, deploy |
+| [profile/TODO.md](profile/TODO.md) | The GitHub profile README: the showcase, its numbers and how they are counted |
 
 Decisions that can wait for an answer are ticket files in [`tickets/`](../tickets/), one per question.
 An answer that shapes the code is recorded in [`docs/decisions/`](decisions/).

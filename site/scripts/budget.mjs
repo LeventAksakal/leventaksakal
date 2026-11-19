@@ -14,7 +14,7 @@ import { join } from 'node:path';
 const LIGHTHOUSE = 'lighthouse@13.6.0';
 const base = (process.argv[2] ?? 'http://127.0.0.1:8788').replace(/\/$/, '');
 
-// Targets are in README.md ("Speed and accessibility"). The first run on GitHub's runner
+// Targets are in SITE.md ("Speed and accessibility"). The first run on GitHub's runner
 // (16 Nov 2026) read 99, 99, 99 for the home page; a desk with other work going reads 83 to 95.
 const PAGES = [
   { path: '/', runs: 3, performance: 90, weightKiB: 600 },

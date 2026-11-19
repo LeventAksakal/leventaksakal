@@ -27,6 +27,14 @@
         "preview"
       ],
       "port": 8788
+    },
+    {
+      "name": "profile",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "profile/preview.mjs"
+      ],
+      "port": 8790
     }
   ]
 }
