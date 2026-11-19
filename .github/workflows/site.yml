@@ -1,14 +1,23 @@
 # Checks the site and, on main, puts it live. A push to main is the only way to deploy.
 #
-# What runs depends on what changed (job "changes"):
-#   nothing under site/    the workflow does not start (see "paths" below)
-#   content only           build, image metadata, internal links, deploy        target: live in 3 min
-#   anything else          the same, plus type check and Lighthouse budget       target: live in 4 min
+# A job runs only when a file it reads changed (job "changes"). The deploy runs only when the
+# built site can differ:
+#   nothing under site/, or only files no job reads     the workflow does not start ("paths" below)
+#   content only                    build, image metadata, internal links, deploy   target: live in 3 min
+#   other files that ship           the same, plus type check and Lighthouse budget target: live in 4 min
+#   only a check's own script       the job that runs that script, no deploy
+#   only this workflow              every check, no deploy
+# "Ships" is src/, public/ and the build's settings (astro.config.mjs, package.json and its lock,
+# tsconfig.json, wrangler.toml), and any file under site/ this list does not know: an unknown
+# file is treated as code, never as nothing. Content is a post, a post's pictures, the shelf,
+# cover art, a photograph or a logo. Those cannot break the layout or the scripts, so they skip
+# the two slow checks; the facts in src/data/site.ts count as code.
+# Files no job reads: Markdown in site/ itself, site/.gitignore, and the scripts that are only
+# run by hand (covers.mjs, font.mjs).
+# After changing the deploy job, start the workflow by hand (Actions, "Run workflow", or
+# `gh workflow run site`): started by hand it runs everything and deploys.
 # Measured 16 Nov 2026: a content push was live 50 s after the push; the checks of a code push
 # were done after 1 min 50 s (2 min 22 s with a cold image cache) and the upload takes about 25 s.
-# Content is a post, a post's pictures, the shelf, cover art, a photograph or a logo. Those cannot
-# break the layout or the scripts, so they skip the two slow checks. Everything else under site/
-# counts as code, the facts in src/data/site.ts included.
 #
 # The build that was checked is the build that is uploaded: "build" stores dist/ as an artifact,
 # "budget" measures it and "deploy" uploads it. Nothing is built twice.
@@ -19,9 +28,22 @@ name: site
 on:
   push:
     branches: [main]
-    paths: ['site/**', '.github/workflows/site.yml']
+    # Files no job reads do not start the workflow. Keep in step with "nothing" in the job "changes".
+    paths:
+      - 'site/**'
+      - '.github/workflows/site.yml'
+      - '!site/*.md'
+      - '!site/.gitignore'
+      - '!site/scripts/covers.mjs'
+      - '!site/scripts/font.mjs'
   pull_request:
-    paths: ['site/**', '.github/workflows/site.yml']
+    paths:
+      - 'site/**'
+      - '.github/workflows/site.yml'
+      - '!site/*.md'
+      - '!site/.gitignore'
+      - '!site/scripts/covers.mjs'
+      - '!site/scripts/font.mjs'
   workflow_dispatch:
 
 # A newer push replaces a run that is still going: only the latest commit is worth deploying.
@@ -42,32 +64,52 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 2
     outputs:
-      kind: ${{ steps.kind.outputs.kind }}
+      build: ${{ steps.plan.outputs.build }}
+      types: ${{ steps.plan.outputs.types }}
+      budget: ${{ steps.plan.outputs.budget }}
+      deploy: ${{ steps.plan.outputs.deploy }}
     steps:
-      - id: kind
+      - id: plan
         env:
           GH_TOKEN: ${{ github.token }}
           BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
           HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
-          # "code" unless every changed file under site/ is known content. Started by hand, a new
-          # branch, a rewritten history or a very large change: no reliable list, so run it all.
-          kind=code
+          # Everything runs unless the list of changed files says less is enough. Started by hand,
+          # a new branch, a rewritten history or a very large change: no reliable list, so run it all.
+          build=true types=true budget=true deploy=true why='no list of changed files: everything runs'
           if [ "$GITHUB_EVENT_NAME" != workflow_dispatch ] && [ -n "$BASE" ] && [ -z "${BASE##*[!0]*}" ]; then
             if files=$(gh api "repos/$GITHUB_REPOSITORY/compare/$BASE...$HEAD" --jq '.files[].filename') \
               && [ "$(printf '%s\n' "$files" | wc -l)" -lt 300 ]; then
-              site=$(printf '%s\n' "$files" | grep -E '^(site/|\.github/workflows/site\.yml$)' || true)
-              other=$(printf '%s\n' "$site" | grep -vE '^site/(src/content/|src/data/shelf\.json$|src/assets/(covers|photos)/|public/logos/)' || true)
-              [ -z "$other" ] && kind=content
-              printf 'Changed under site/:\n%s\n' "$site"
+              has() { printf '%s\n' "$files" | grep -qE "$1"; }
+              # "nothing" is read by no job; "paths" above leaves the same files out.
+              nothing='^site/([^/]*\.md|\.gitignore|scripts/(covers|font)\.mjs)$'
+              tools='^site/scripts/(budget|links|strip)\.mjs$'
+              content='^site/(src/content/|src/data/shelf\.json$|src/assets/(covers|photos)/|public/logos/)'
+              # Whatever else is under site/ ships, a file this list has never seen included.
+              ships=$(printf '%s\n' "$files" | grep -E '^site/' | grep -vE "$nothing" | grep -vE "$tools" || true)
+              code=$(printf '%s\n' "$ships" | grep -vE "$content" || true)
+              build=false types=false budget=false deploy=false why='nothing a job reads changed'
+              if [ -n "$ships" ]; then build=true deploy=true why='content changed'; fi
+              if [ -n "$code" ]; then types=true budget=true why='files that ship changed'; fi
+              if has '^site/scripts/(links|strip)\.mjs$'; then build=true why="$why; a script of the build job changed"; fi
+              if has '^site/scripts/budget\.mjs$'; then build=true budget=true why="$why; the budget script changed"; fi
+              if has '^\.github/workflows/site\.yml$'; then build=true types=true budget=true why="$why; this workflow changed"; fi
+              printf 'Changed files:\n%s\n' "$files"
             fi
           fi
-          echo "kind=$kind" >> "$GITHUB_OUTPUT"
-          echo "Change kind: **$kind**" >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo "build=$build"
+            echo "types=$types"
+            echo "budget=$budget"
+            echo "deploy=$deploy"
+          } >> "$GITHUB_OUTPUT"
+          echo "Runs: build **$build**, type check **$types**, Lighthouse budget **$budget**, deploy **$deploy** ($why)" | tee -a "$GITHUB_STEP_SUMMARY"
 
   build:
     name: Build, images, links
     needs: changes
+    if: needs.changes.outputs.build == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     defaults:
@@ -105,7 +147,7 @@ jobs:
   types:
     name: Type check
     needs: changes
-    if: needs.changes.outputs.kind == 'code'
+    if: needs.changes.outputs.types == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     defaults:
@@ -124,7 +166,7 @@ jobs:
   budget:
     name: Lighthouse budget
     needs: [changes, build]
-    if: needs.changes.outputs.kind == 'code'
+    if: needs.changes.outputs.budget == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -153,9 +195,11 @@ jobs:
   deploy:
     name: Deploy to leventaksakal.com
     needs: [changes, build, types, budget]
-    # Skipped checks (a content change) count as passed; a failed or cancelled one stops the deploy.
+    # Only when the built site can differ. Skipped checks (a content change) count as passed; a
+    # failed or cancelled one stops the deploy.
     if: >-
       !cancelled() && github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+      && needs.changes.outputs.deploy == 'true'
       && needs.build.result == 'success'
       && (needs.types.result == 'success' || needs.types.result == 'skipped')
       && (needs.budget.result == 'success' || needs.budget.result == 'skipped')
@@ -179,7 +223,7 @@ jobs:
           SUBJECT: ${{ github.event.head_commit.message }}
         run: |
           if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
-            echo "::error::Nothing was deployed: the repository secret CLOUDFLARE_API_TOKEN or the variable CLOUDFLARE_ACCOUNT_ID is missing. README.md, section Deploy, says how to set them."
+            echo "::error::Nothing was deployed: the repository secret CLOUDFLARE_API_TOKEN or the variable CLOUDFLARE_ACCOUNT_ID is missing. SITE.md, section Deploy, says how to set them."
             exit 1
           fi
           npx --yes "$WRANGLER" pages deploy dist --project-name levent-website --branch main \
